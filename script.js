@@ -1,13 +1,14 @@
 // Configuración del mapa de distribución de fauna de Chile
 document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
+    const PREFIX = "/P1"
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 3.0;
 
     // Importar datos de fauna desde el JSON
     let FAUNA_DATA;
     try {
-        const response = await fetch('/P1/data/especies_xd.json');
+        const response = await fetch(PREFIX + '/data/especies_xd.json');
         FAUNA_DATA = await response.json();
         console.log('Datos de fauna cargados:', FAUNA_DATA);
     } catch (error) {
@@ -39,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Inicializar el mapa
     const map = new maplibregl.Map({
         container: 'map',
-        style: '/P1/mapas/style.json',
+        style: PREFIX +'/mapas/style.json',
         center: CHILE_CENTER,
         zoom: CHILE_ZOOM,
         attributionControl: false,
@@ -53,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function cargarVisualizacion() {
         try {
             // Cargar el archivo combinado de todas las regiones
-            const response = await fetch('/P1/mapas/regiones_combinadas.geojson');
+            const response = await fetch(PREFIX+'/mapas/regiones_combinadas.geojson');
             if (!response.ok) {
                 throw new Error('Error al cargar regiones_combinadas.geojson');
             }
