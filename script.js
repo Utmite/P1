@@ -3,7 +3,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
     const PREFIX = "/P1"
     const CHILE_CENTER = [-71.2, -39.5];
-    const CHILE_ZOOM = 3.0;
+    const CHILE_ZOOM = 2.8;
+    
+    // Límites geográficos de Chile continental (sin Isla de Pascua)
+    const CHILE_BOUNDS = [
+        [-76.0, -56.0], // Suroeste (costa continental)
+        [-66.5, -17.5]   // Noreste
+    ];
 
     // Importar datos de fauna desde el JSON
     let FAUNA_DATA;
@@ -43,11 +49,28 @@ document.addEventListener('DOMContentLoaded', async function() {
         style: PREFIX +'/mapas/style.json',
         center: CHILE_CENTER,
         zoom: CHILE_ZOOM,
+        minZoom: 1.5,
+        maxZoom: 12,
         attributionControl: false,
-        interactive: false,
+        interactive: true,
         pitch: 0,
         bearing: 0,
         antialias: true
+    });
+
+    // Ajustar inmediatamente para mostrar todo Chile
+    map.fitBounds(CHILE_BOUNDS, {
+        padding: { top: 30, bottom: 30, left: 30, right: 30 },
+        maxZoom: 3.5
+    });
+
+    // Agregar controles de navegación
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+    // Función para cargar cuando el mapa esté listo
+    map.on('load', function() {
+        console.log('Mapa base cargado');
+        cargarVisualizacion();
     });
 
     // Función para cargar las regiones con visualización de datos
@@ -123,12 +146,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Error al cargar la visualización:', error);
         }
     }
-
-    // Eventos del mapa
-    map.on('load', function() {
-        console.log('Mapa base cargado');
-        cargarVisualizacion();
-    });
 
     map.on('error', function(e) {
         console.error('Error en el mapa:', e);
