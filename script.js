@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
     const CHILE_CENTER = [-71.2, -39.5];
-    const CHILE_ZOOM = 3.4;
+    const CHILE_ZOOM = 3.2;
 
     // Importar datos de fauna desde el JSON
     let FAUNA_DATA;
