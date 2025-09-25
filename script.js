@@ -1,7 +1,7 @@
 // Configuración del mapa de distribución de fauna de Chile
 document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
-    const PREFIX = "P1/"
+    const PREFIX = "/P1"
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 2.8;
     
