@@ -3,8 +3,8 @@
 ## 👥 Nombres
 
 1. Vicente Muñoz
-2. _(Completar)_
-3. _(Completar)_
+2. Cristobal Soto
+3. Pilar Valloton
 
 ## 🌐 Página
 
