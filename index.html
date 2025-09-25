@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Chile - MapLibre GL</title>
+    <title>Distribución de la Fauna de Chile</title>
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css">
@@ -18,11 +18,59 @@
         <!-- Sección de contenido (2/3 del ancho) -->
         <div class="content-section">
             <header class="header">
-       
+                <h1>Distribución de la Fauna de Chile</h1>
+                <p class="subtitle">Visualización de la concentración de especies únicas por región</p>
+                <div class="legend">
+                    <div class="legend-title">🎯 Concentración de Fauna</div>
+                    <div class="legend-gradient">
+                        <span class="legend-label">Baja</span>
+                        <div class="gradient-bar"></div>
+                        <span class="legend-label">Alta</span>
+                    </div>
+                    <p class="legend-description">
+                        Los tonos más intensos indican regiones con mayor diversidad de especies
+                    </p>
+                </div>
             </header>
             
             <main class="main-content">
-
+                <div class="stats-grid">
+                    <div class="region-stat top-region">
+                        <div class="region-name">Región de Magallanes y Antártica Chilena</div>
+                        <div class="region-percentage">18.4%</div>
+                        <div class="region-animals">997 especies</div>
+                    </div>
+                    <div class="region-stat top-region">
+                        <div class="region-name">Región de Aysén del Gral.Ibañez del Campo</div>
+                        <div class="region-percentage">11.8%</div>
+                        <div class="region-animals">641 especies</div>
+                    </div>
+                    <div class="region-stat top-region">
+                        <div class="region-name">Región de Los Lagos</div>
+                        <div class="region-percentage">10.6%</div>
+                        <div class="region-animals">573 especies</div>
+                    </div>
+                    <div class="region-stat">
+                        <div class="region-name">Región de La Araucanía</div>
+                        <div class="region-percentage">10.1%</div>
+                        <div class="region-animals">549 especies</div>
+                    </div>
+                    <div class="region-stat">
+                        <div class="region-name">Región de Los Ríos</div>
+                        <div class="region-percentage">8.6%</div>
+                        <div class="region-animals">464 especies</div>
+                    </div>
+                    <div class="region-stat">
+                        <div class="region-name">Región de Valparaíso</div>
+                        <div class="region-percentage">8.4%</div>
+                        <div class="region-animals">456 especies</div>
+                    </div>
+                    <div class="region-stat resto-chile">
+                        <div class="region-name">Resto de Chile</div>
+                        <div class="region-percentage">32.1%</div>
+                        <div class="region-animals">1,738 especies</div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>

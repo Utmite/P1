@@ -1,6 +1,6 @@
 {
-  "id": "43f36e14-e3f5-43c1-84c0-50a9c80dc5c7",
-  "name": "MapLibre - Chile Simple",
+  "id": "chile-fauna-distribution",
+  "name": "Chile Fauna Distribution Map",
   "zoom": 3.5,
   "pitch": 0,
   "center": [-71.0, -35.0],
@@ -10,7 +10,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#FFFFFF"
+        "background-color": "#fafafa"
       },
       "filter": ["all"],
       "layout": {
@@ -19,22 +19,35 @@
       "maxzoom": 24
     },
     {
-      "id": "countries-boundary-chile",
-      "type": "line",
+      "id": "ocean",
+      "type": "fill",
       "paint": {
-        "line-color": "#000000",
-        "line-width": {
-          "stops": [
-            [1, 1],
-            [6, 2],
-            [14, 3],
-            [22, 5]
-          ]
-        }
+        "fill-color": "#e0f2fe",
+        "fill-opacity": 0.6
       },
       "filter": [
         "all",
-        ["==", ["get", "ADM0_A3"], "CHL"]
+        ["==", ["geometry-type"], "Polygon"],
+        ["==", ["get", "class"], "ocean"]
+      ],
+      "layout": {
+        "visibility": "visible"
+      },
+      "source": "maplibre",
+      "maxzoom": 24,
+      "source-layer": "water"
+    },
+    {
+      "id": "countries-boundary-other",
+      "type": "line",
+      "paint": {
+        "line-color": "#cbd5e1",
+        "line-width": 1,
+        "line-opacity": 0.3
+      },
+      "filter": [
+        "all",
+        ["!=", ["get", "ADM0_A3"], "CHL"]
       ],
       "layout": {
         "line-cap": "round",
@@ -55,7 +68,7 @@
   },
   "version": 8,
   "metadata": {
-    "maptiler:copyright": "This style was generated on MapTiler Cloud. Usage is governed by the license terms in https://github.com/maplibre/demotiles/blob/gh-pages/LICENSE",
-    "openmaptiles:version": "3.x"
+    "title": "Distribución de la Fauna de Chile",
+    "description": "Mapa de visualización de la concentración de especies por región"
   }
 }
