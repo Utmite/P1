@@ -1,7 +1,7 @@
 // Configuración del mapa de distribución de fauna de Chile
 document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
-    const PREFIX = "/P1"
+    const PREFIX = "P1/"
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 2.8;
     
@@ -53,20 +53,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         minZoom: 1.5,
         maxZoom: 12,
         attributionControl: false,
-        interactive: true,
+        interactive: false,
         pitch: 0,
         bearing: 0,
         antialias: true
     });
+
+    // Deshabilitar todos los controles de navegación
+    map.boxZoom.disable();
+    map.scrollZoom.disable();
+    map.dragPan.disable();
+    map.dragRotate.disable();
+    map.keyboard.disable();
+    map.doubleClickZoom.disable();
+    map.touchZoomRotate.disable();
 
     // Ajustar inmediatamente para mostrar todo Chile
     map.fitBounds(CHILE_BOUNDS, {
         padding: { top: 30, bottom: 30, left: 30, right: 30 },
         maxZoom: 3.5
     });
-
-    // Agregar controles de navegación
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     // Función para cargar cuando el mapa esté listo
     map.on('load', function() {
