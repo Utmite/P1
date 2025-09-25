@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Chile - MapLibre GL</title>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sección del mapa (1/3 del ancho) -->
+        <div class="map-section">
+            <div id="map"></div>
+            <div class="map-overlay">
+                <h2>Mapa de Chile</h2>
+                <p>Visualización interactiva usando MapLibre GL</p>
+            </div>
+        </div>
+        
+        <!-- Sección de contenido (2/3 del ancho) -->
+        <div class="content-section">
+            <header class="header">
+                <h1>Información de Chile</h1>
+                <p class="subtitle">Datos geográficos y estadísticos</p>
+            </header>
+            
+            <main class="main-content">
+                <section class="info-card">
+                    <h3>Datos Generales</h3>
+                    <ul>
+                        <li><strong>Capital:</strong> Santiago</li>
+                        <li><strong>Población:</strong> ~19.5 millones</li>
+                        <li><strong>Superficie:</strong> 756,096 km²</li>
+                        <li><strong>Longitud:</strong> 4,270 km</li>
+                        <li><strong>Ancho promedio:</strong> 180 km</li>
+                    </ul>
+                </section>
+                
+                <section class="info-card">
+                    <h3>Regiones Principales</h3>
+                    <div class="regions-grid">
+                        <div class="region-item">
+                            <h4>Norte Grande</h4>
+                            <p>Desierto de Atacama, minería</p>
+                        </div>
+                        <div class="region-item">
+                            <h4>Norte Chico</h4>
+                            <p>Valles transversales</p>
+                        </div>
+                        <div class="region-item">
+                            <h4>Zona Central</h4>
+                            <p>Valle Central, mayoría poblacional</p>
+                        </div>
+                        <div class="region-item">
+                            <h4>Sur</h4>
+                            <p>Lagos, bosques, agricultura</p>
+                        </div>
+                        <div class="region-item">
+                            <h4>Austral</h4>
+                            <p>Patagonia, glaciares</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

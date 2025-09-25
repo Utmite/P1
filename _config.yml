@@ -1,0 +1,44 @@
+# Configuración para GitHub Pages
+# Este archivo es opcional pero ayuda con la configuración
+
+# Información del sitio
+title: "Mapa de Chile - MapLibre"
+description: "Visualización interactiva de Chile usando MapLibre GL JS"
+url: "" # Se llenará automáticamente por GitHub Pages
+baseurl: "" # Si tu sitio está en un subdirectorio, especifícalo aquí
+
+# Configuración de Jekyll
+markdown: kramdown
+highlighter: rouge
+
+# Plugins (los que están disponibles en GitHub Pages)
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Excluir archivos del sitio generado
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .gitignore
+
+# Incluir archivos que normalmente Jekyll ignora
+include:
+  - .htaccess
+
+# Configuración por defecto
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# Configuración de encoding
+encoding: utf-8
+
+# Timezone
+timezone: America/Santiago
