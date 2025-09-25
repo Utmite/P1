@@ -15,26 +15,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         return;
     }
 
-    // Lista de archivos GeoJSON por región (basada en nombres estándar)
-    const REGION_FILES = {
-        "Región Metropolitana de Santiago": "Región_Metropolitana_de_Santiago",
-        "Región de Antofagasta": "Región_de_Antofagasta",
-        "Región de Arica y Parinacota": "Región_de_Arica_y_Parinacota",
-        "Región de Atacama": "Región_de_Atacama",
-        "Región de Aysén del Gral.Ibañez del Campo": "Región_de_Aysén_del_GralIbañez_del_Campo",
-        "Región de Coquimbo": "Región_de_Coquimbo",
-        "Región de La Araucanía": "Región_de_La_Araucanía",
-        "Región de Los Lagos": "Región_de_Los_Lagos",
-        "Región de Los Ríos": "Región_de_Los_Ríos",
-        "Región de Magallanes y Antártica Chilena": "Región_de_Magallanes_y_Antártica_Chilena",
-        "Región de Tarapacá": "Región_de_Tarapacá",
-        "Región de Valparaíso": "Región_de_Valparaíso",
-        "Región de Ñuble": "Región_de_Ñuble",
-        "Región del Bío-Bío": "Región_del_Bío-Bío",
-        "Región del Libertador Bernardo O'Higgins": "Región_del_Libertador_Bernardo_O'Higgins",
-        "Región del Maule": "Región_del_Maule"
-    };
-
     // Función para calcular color basado en porcentaje
     function getColorByPercentage(percentage) {
         // Normalizar porcentaje (max es ~12.3%)
@@ -72,23 +52,45 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Función para cargar las regiones con visualización de datos
     async function cargarVisualizacion() {
         try {
-            for (const [index, regionName] of Object.entries(FAUNA_DATA.Region)) {
-                if (regionName === "Zona sin demarcar") continue; // Skip zona sin demarcar
+            // Cargar el archivo combinado de todas las regiones
+            const response = await fetch('/mapas/regiones_combinadas.geojson');
+            if (!response.ok) {
+                throw new Error('Error al cargar regiones_combinadas.geojson');
+            }
+            
+            const regionesData = await response.json();
+            
+            // Procesar cada feature (región) del GeoJSON
+            regionesData.features.forEach((feature, index) => {
+                // Obtener el nombre de la región desde las propiedades del feature
+                const regionName = feature.properties.name || feature.properties.NAME || feature.properties.Region;
                 
-                const fileName = REGION_FILES[regionName];
-                if (!fileName) continue;
-
-                const response = await fetch(`/mapas/${fileName}.geojson`);
-                if (!response.ok) continue;
+                // Buscar la región en nuestros datos
+                let regionIndex = null;
+                for (const [dataIndex, dataRegion] of Object.entries(FAUNA_DATA.Region)) {
+                    if (dataRegion === regionName || dataRegion.includes(regionName) || regionName.includes(dataRegion)) {
+                        regionIndex = dataIndex;
+                        break;
+                    }
+                }
                 
-                const data = await response.json();
-                const percentage = FAUNA_DATA.porcentaje_especies[index];
+                if (!regionIndex || FAUNA_DATA.Region[regionIndex] === "Zona sin demarcar") {
+                    return; // Skip si no encontramos la región o es zona sin demarcar
+                }
+                
+                const percentage = FAUNA_DATA.porcentaje_especies[regionIndex];
                 const color = getColorByPercentage(percentage);
 
-                // Agregar fuente de datos
+                // Crear un GeoJSON individual para cada región
+                const singleRegionGeoJSON = {
+                    type: "FeatureCollection",
+                    features: [feature]
+                };
+
+                // Agregar fuente de datos para esta región
                 map.addSource(`fauna-${index}`, {
                     type: 'geojson',
-                    data: data
+                    data: singleRegionGeoJSON
                 });
 
                 // Agregar capa de relleno con color basado en porcentaje
@@ -113,10 +115,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                         'line-opacity': 0.9
                     }
                 });
-            }
+            });
 
-            // Generar estadísticas en la interfaz (las cards ya están en el HTML)
-            console.log('Visualización de fauna cargada correctamente');
+            console.log('Visualización de fauna cargada correctamente desde regiones_combinadas.geojson');
         } catch (error) {
             console.error('Error al cargar la visualización:', error);
         }
