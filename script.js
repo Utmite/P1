@@ -1,69 +1,19 @@
 // Configuración del mapa de distribución de fauna de Chile
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 3.4;
 
-    // Datos de fauna por región
-    const FAUNA_DATA = {
-        "Region": {
-            "0": "Región Metropolitana de Santiago",
-            "1": "Región de Antofagasta",
-            "2": "Región de Arica y Parinacota",
-            "3": "Región de Atacama",
-            "4": "Región de Aysén del Gral.Ibañez del Campo",
-            "5": "Región de Coquimbo",
-            "6": "Región de La Araucanía",
-            "7": "Región de Los Lagos",
-            "8": "Región de Los Ríos",
-            "9": "Región de Magallanes y Antártica Chilena",
-            "10": "Región de Tarapacá",
-            "11": "Región de Valparaíso",
-            "12": "Región de Ñuble",
-            "13": "Región del Bío-Bío",
-            "14": "Región del Libertador Bernardo O'Higgins",
-            "15": "Región del Maule",
-            "16": "Zona sin demarcar"
-        },
-        "porcentaje": {
-            "0": 17.5591590274,
-            "1": 1.7159984178,
-            "2": 4.8000408345,
-            "3": 1.9980274308,
-            "4": 3.3944174544,
-            "5": 6.3872535603,
-            "6": 4.5312602316,
-            "7": 12.8295146206,
-            "8": 4.857543494,
-            "9": 9.5129664064,
-            "10": 0.7346408053,
-            "11": 18.4249033632,
-            "12": 0.8885554129,
-            "13": 4.3799167782,
-            "14": 3.6727607242,
-            "15": 4.3129907754,
-            "16": 0.0000506631
-        },
-        "cantidad_animales": {
-            "0": 1386346,
-            "1": 135483,
-            "2": 378977,
-            "3": 157750,
-            "4": 267999,
-            "5": 504292,
-            "6": 357756,
-            "7": 1012927,
-            "8": 383517,
-            "9": 751076,
-            "10": 58002,
-            "11": 1454699,
-            "12": 70154,
-            "13": 345807,
-            "14": 289975,
-            "15": 340523,
-            "16": 4
-        }
-    };
+    // Importar datos de fauna desde el JSON
+    let FAUNA_DATA;
+    try {
+        const response = await fetch('/data/especies_xd.json');
+        FAUNA_DATA = await response.json();
+        console.log('Datos de fauna cargados:', FAUNA_DATA);
+    } catch (error) {
+        console.error('Error al cargar datos de fauna:', error);
+        return;
+    }
 
     // Lista de archivos GeoJSON por región (basada en nombres estándar)
     const REGION_FILES = {
@@ -87,8 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Función para calcular color basado en porcentaje
     function getColorByPercentage(percentage) {
-        // Normalizar porcentaje (max es ~18.4%)
-        const normalized = Math.min(percentage / 20, 1);
+        // Normalizar porcentaje (max es ~12.3%)
+        const normalized = Math.min(percentage / 15, 1);
         
         // Gradiente verde usando valores RGB estándar
         // Del verde más claro al más oscuro
@@ -132,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!response.ok) continue;
                 
                 const data = await response.json();
-                const percentage = FAUNA_DATA.porcentaje[index];
+                const percentage = FAUNA_DATA.porcentaje_especies[index];
                 const color = getColorByPercentage(percentage);
 
                 // Agregar fuente de datos

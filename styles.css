@@ -55,21 +55,23 @@ body {
 
 .header {
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .header h1 {
-  font-size: 1.75rem;
+  font-size: 1.875rem;
   font-weight: 700;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
   color: var(--foreground);
   line-height: 1.2;
 }
 
 .subtitle {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--muted-foreground);
   margin: 0 0 1rem 0;
   line-height: 1.4;
+  font-weight: 500;
 }
 
 .legend {
@@ -111,12 +113,10 @@ body {
 }
 
 .legend-description {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--muted-foreground);
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
-  font-style: italic;
-  text-align: center;
 }
 
 .stats-grid {
@@ -125,6 +125,8 @@ body {
   gap: 0.75rem;
   max-height: calc(100vh - 220px);
   overflow-y: auto;
+  position: relative;
+  z-index: 2;
 }
 
 .region-stat {
@@ -134,11 +136,14 @@ body {
   padding: 0.75rem;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 3;
 }
 
 .region-stat:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
+  z-index: 10;
 }
 
 .region-stat.top-region {
@@ -192,6 +197,7 @@ body {
     flex: 0 0 40vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
+    gap: 4px;
   }
   
   .content-section {
