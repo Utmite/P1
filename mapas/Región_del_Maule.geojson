@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "Región_del_Maule",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "objectid": 1098, "cir_sena": 9, "codregion": 7, "area_km": 30321.890658330001, "st_area_sh": 45969426092.199997, "st_length_": 1388327.97603, "Region": "Región del Maule" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -72.034314508241835, -34.687331114780235 ], [ -70.364648409560473, -35.005702743244839 ], [ -70.711525316963048, -36.426209548711334 ], [ -72.778159334605377, -36.014388071204458 ], [ -72.034314508241835, -34.687331114780235 ] ] ] } }
-]
-}

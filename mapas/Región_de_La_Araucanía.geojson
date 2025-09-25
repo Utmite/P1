@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "Región_de_La_Araucanía",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "objectid": 1095, "cir_sena": 11, "codregion": 9, "area_km": 31837.567634290001, "st_area_sh": 52215073343.900002, "st_length_": 1501025.2482, "Region": "Región de La Araucanía" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -72.773196033066142, -37.590061484780975 ], [ -70.995573311385868, -38.170740546547364 ], [ -71.502608469360311, -39.637136549189734 ], [ -72.858231356463179, -39.288228339744173 ], [ -73.159966822199166, -39.415900099187375 ], [ -73.242723261654206, -39.390273563144461 ], [ -72.773196033066142, -37.590061484780975 ] ] ] } }
-]
-}

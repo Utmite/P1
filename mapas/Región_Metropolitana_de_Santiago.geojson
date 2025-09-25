@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "Región_Metropolitana_de_Santiago",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "objectid": 1092, "cir_sena": 7, "codregion": 13, "area_km": 15392.030737, "st_area_sh": 22252038245.799999, "st_length_": 1064252.6350100001, "Region": "Región Metropolitana de Santiago" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -70.730980609873271, -32.926149496036778 ], [ -69.799914911841341, -33.288108502783679 ], [ -69.806585806531089, -34.248088741272888 ], [ -71.711944224796667, -33.96644211691445 ], [ -70.730980609873271, -32.926149496036778 ] ] ] } }
-]
-}

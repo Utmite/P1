@@ -1,6 +1,6 @@
 {
-  "id": "43f36e14-e3f5-43c1-84c0-50a9c80dc5c7",
-  "name": "MapLibre - Chile Only",
+  "id": "chile-fauna-distribution",
+  "name": "Chile Fauna Distribution Map",
   "zoom": 3.5,
   "pitch": 0,
   "center": [-71.0, -35.0],
@@ -10,7 +10,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#FFFFFF"
+        "background-color": "#fafafa"
       },
       "filter": ["all"],
       "layout": {
@@ -19,82 +19,37 @@
       "maxzoom": 24
     },
     {
-      "id": "coastline",
-      "type": "line",
+      "id": "ocean",
+      "type": "fill",
       "paint": {
-        "line-blur": 0.5,
-        "line-color": "#0066CC",
-        "line-width": {
-          "stops": [
-            [0, 1],
-            [6, 2],
-            [14, 4],
-            [22, 8]
-          ]
-        }
+        "fill-color": "#e0f2fe",
+        "fill-opacity": 0.6
       },
-      "filter": ["all"],
+      "filter": [
+        "all",
+        ["==", ["geometry-type"], "Polygon"],
+        ["==", ["get", "class"], "ocean"]
+      ],
       "layout": {
-        "line-cap": "round",
-        "line-join": "round",
         "visibility": "visible"
       },
       "source": "maplibre",
       "maxzoom": 24,
-      "minzoom": 0,
-      "source-layer": "countries"
+      "source-layer": "water"
     },
     {
-      "id": "countries-fill-world",
-      "type": "fill",
+      "id": "countries-boundary-other",
+      "type": "line",
       "paint": {
-        "fill-color": "#F5F5F5"
+        "line-color": "#cbd5e1",
+        "line-width": 1,
+        "line-opacity": 0.3
       },
       "filter": [
         "all",
         ["!=", ["get", "ADM0_A3"], "CHL"]
       ],
       "layout": {
-        "visibility": "visible"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "source-layer": "countries"
-    },
-    {
-      "id": "countries-fill-chile",
-      "type": "fill",
-      "paint": {
-        "fill-color": "#FF6B6B",
-        "fill-outline-color": "#D32F2F"
-      },
-      "filter": [
-        "all",
-        ["==", ["get", "ADM0_A3"], "CHL"]
-      ],
-      "layout": {
-        "visibility": "visible"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "source-layer": "countries"
-    },
-    {
-      "id": "countries-boundary",
-      "type": "line",
-      "paint": {
-        "line-color": "#CCCCCC",
-        "line-width": {
-          "stops": [
-            [1, 0.5],
-            [6, 1],
-            [14, 2],
-            [22, 4]
-          ]
-        },
-        "line-opacity": 0.7
-      },
-      "layout": {
         "line-cap": "round",
         "line-join": "round",
         "visibility": "visible"
@@ -102,157 +57,6 @@
       "source": "maplibre",
       "maxzoom": 24,
       "source-layer": "countries"
-    },
-    {
-      "id": "countries-boundary-chile",
-      "type": "line",
-      "paint": {
-        "line-color": "#B71C1C",
-        "line-width": {
-          "stops": [
-            [1, 2],
-            [6, 3],
-            [14, 5],
-            [22, 10]
-          ]
-        },
-        "line-opacity": 1
-      },
-      "filter": [
-        "all",
-        ["==", ["get", "ADM0_A3"], "CHL"]
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round",
-        "visibility": "visible"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "source-layer": "countries"
-    },
-    {
-      "id": "geolines",
-      "type": "line",
-      "paint": {
-        "line-color": "#DDDDDD",
-        "line-opacity": 0.5,
-        "line-dasharray": [3, 3]
-      },
-      "filter": [
-        "all",
-        ["!=", "name", "International Date Line"]
-      ],
-      "layout": {
-        "visibility": "visible"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "source-layer": "geolines"
-    },
-    {
-      "id": "geolines-label",
-      "type": "symbol",
-      "paint": {
-        "text-color": "#999999",
-        "text-halo-blur": 1,
-        "text-halo-color": "rgba(255, 255, 255, 0.8)",
-        "text-halo-width": 1
-      },
-      "filter": [
-        "all",
-        ["!=", "name", "International Date Line"]
-      ],
-      "layout": {
-        "text-font": ["Open Sans Semibold"],
-        "text-size": {
-          "stops": [
-            [2, 10],
-            [6, 12]
-          ]
-        },
-        "text-field": "{name}",
-        "visibility": "visible",
-        "symbol-placement": "line"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "minzoom": 1,
-      "source-layer": "geolines"
-    },
-    {
-      "id": "countries-label-chile",
-      "type": "symbol",
-      "paint": {
-        "text-color": "#B71C1C",
-        "text-halo-blur": 1,
-        "text-halo-color": "rgba(255, 255, 255, 1)",
-        "text-halo-width": 2
-      },
-      "filter": [
-        "all",
-        ["==", ["get", "ADM0_A3"], "CHL"]
-      ],
-      "layout": {
-        "text-font": ["Open Sans Semibold"],
-        "text-size": {
-          "stops": [
-            [2, 14],
-            [4, 18],
-            [6, 24]
-          ]
-        },
-        "text-field": "CHILE",
-        "visibility": "visible",
-        "text-max-width": 10,
-        "text-transform": "uppercase"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "minzoom": 2,
-      "source-layer": "centroids"
-    },
-    {
-      "id": "countries-label-world",
-      "type": "symbol",
-      "paint": {
-        "text-color": "#BBBBBB",
-        "text-halo-blur": 1,
-        "text-halo-color": "rgba(255, 255, 255, 0.8)",
-        "text-halo-width": 1
-      },
-      "filter": [
-        "all",
-        ["!=", ["get", "ADM0_A3"], "CHL"]
-      ],
-      "layout": {
-        "text-font": ["Open Sans Semibold"],
-        "text-size": {
-          "stops": [
-            [2, 8],
-            [4, 10],
-            [6, 12]
-          ]
-        },
-        "text-field": {
-          "stops": [
-            [2, "{ABBREV}"],
-            [4, "{NAME}"]
-          ]
-        },
-        "visibility": "visible",
-        "text-max-width": 10,
-        "text-transform": {
-          "stops": [
-            [0, "uppercase"],
-            [2, "none"]
-          ]
-        }
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "minzoom": 4,
-      "source-layer": "centroids"
     }
   ],
   "bearing": 0,
@@ -264,7 +68,7 @@
   },
   "version": 8,
   "metadata": {
-    "maptiler:copyright": "This style was generated on MapTiler Cloud. Usage is governed by the license terms in https://github.com/maplibre/demotiles/blob/gh-pages/LICENSE",
-    "openmaptiles:version": "3.x"
+    "title": "Distribución de la Fauna de Chile",
+    "description": "Mapa de visualización de la concentración de especies por región"
   }
 }

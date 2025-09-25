@@ -1,8 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "Región_de_Ñuble",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "objectid": 1097, "cir_sena": 10, "codregion": 16, "area_km": 13104.413230640001, "st_area_sh": 20376298459.299999, "st_length_": 1074093.83999, "Region": "Región de Ñuble" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -72.348575101339264, -36.945327923819349 ], [ -72.765695571160961, -36.005727575336181 ], [ -71.059303314545659, -36.387190262316871 ], [ -71.096189401346265, -37.109605000976096 ], [ -72.348575101339264, -36.945327923819349 ] ] ] } }
-]
-}
