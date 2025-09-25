@@ -1,7 +1,7 @@
 // Configuración del mapa de distribución de fauna de Chile
 document.addEventListener('DOMContentLoaded', async function() {
     // Coordenadas centrales de Chile
-    const PREFIX = "/P1"
+    const PREFIX = ""
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 2.8;
     
@@ -24,21 +24,22 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Función para calcular color basado en porcentaje
     function getColorByPercentage(percentage) {
-        // Normalizar porcentaje (max es ~12.3%)
-        const normalized = Math.min(percentage / 15, 1);
+        // Normalizar porcentaje con mejor distribución (max es ~12.3%)
+        const normalized = Math.min(percentage / 12.5, 1);
         
-        // Gradiente verde usando valores RGB estándar
-        // Del verde más claro al más oscuro
+        // Gradiente verde mejorado con más contraste entre tonos
         const colors = [
-            '#dcfce7', // Verde muy claro
-            '#bbf7d0', // Verde claro
-            '#86efac', // Verde medio claro
-            '#4ade80', // Verde medio
-            '#22c55e', // Verde
-            '#16a34a'  // Verde oscuro
+            '#f0fdf4', // Verde muy muy claro (0-1%)
+            '#dcfce7', // Verde muy claro (1-3%)
+            '#bbf7d0', // Verde claro (3-5%)
+            '#86efac', // Verde medio claro (5-7%)
+            '#4ade80', // Verde medio (7-9%)
+            '#22c55e', // Verde (9-11%)
+            '#16a34a', // Verde oscuro (11-13%)
+            '#15803d'  // Verde muy oscuro (13%+)
         ];
         
-        // Seleccionar color basado en el porcentaje normalizado
+        // Seleccionar color con mejor distribución
         const colorIndex = Math.floor(normalized * (colors.length - 1));
         return colors[Math.min(colorIndex, colors.length - 1)];
     }
@@ -153,4 +154,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Hacer el mapa disponible globalmente
     window.chileMap = map;
+
+    // Función para aplicar colores a las cards basado en porcentaje
+    function styleRegionCards() {
+        const cards = document.querySelectorAll('.region-stat[data-percentage]');
+        cards.forEach(card => {
+            const percentage = parseFloat(card.getAttribute('data-percentage'));
+            const color = getColorByPercentage(percentage);
+            
+            // Convertir hex a RGB para poder usar transparencia
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            // Aplicar gradiente más sólido para mejor contraste
+            card.style.setProperty('background', `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.4), rgba(${r}, ${g}, ${b}, 0.8))`, 'important');
+            card.style.setProperty('border-color', color, 'important');
+            
+            // Color de texto más oscuro para mejor contraste
+            const percentageElement = card.querySelector('.region-percentage');
+            if (percentageElement) {
+                percentageElement.style.color = '#065f46'; // Verde muy oscuro
+            }
+        });
+    }
+
+    // Aplicar estilos a las cards
+    styleRegionCards();
 });

@@ -19,57 +19,79 @@
         <div class="content-section">
             <header class="header">
                 <h1>Distribución de la Fauna de Chile</h1>
-                <p class="subtitle">📊 Diversidad de especies por región administrativa</p>
+                <p class="subtitle">📊 Porcentaje de especies chilenas presentes en cada región administrativa</p>
                 <div class="legend">
-                    <div class="legend-title">Concentración de Especies Únicas</div>
+                    <div class="legend-title">Concentración de Especies por Región</div>
                     <div class="legend-gradient">
-                        <span class="legend-label">Baja</span>
+                        <span class="legend-label">Menor</span>
                         <div class="gradient-bar"></div>
-                        <span class="legend-label">Alta</span>
+                        <span class="legend-label">Mayor</span>
                     </div>
                     <p class="legend-description">
-                        Tonos más intensos indican mayor concentración de especies únicas
+                        Cada región muestra qué porcentaje del total de especies de Chile se encuentra en su territorio
                     </p>
                 </div>
             </header>
             
             <main class="main-content">
                 <div class="stats-grid">
-                    <div class="region-stat top-region">
+                    <!-- Top 3 regiones -->
+                    <div class="region-stat" data-percentage="12.3">
                         <div class="region-name">Región de Valparaíso</div>
                         <div class="region-percentage">12.3%</div>
-                        <div class="region-animals">4,473 especies únicas</div>
+                        <div class="region-animals">4,473 especies de Chile</div>
                     </div>
-                    <div class="region-stat top-region">
+                    <div class="region-stat" data-percentage="9.1">
                         <div class="region-name">Región de Los Lagos</div>
                         <div class="region-percentage">9.1%</div>
-                        <div class="region-animals">3,330 especies únicas</div>
+                        <div class="region-animals">3,330 especies de Chile</div>
                     </div>
-                    <div class="region-stat top-region">
+                    <div class="region-stat" data-percentage="8.2">
                         <div class="region-name">Región de Magallanes y Antártica Chilena</div>
                         <div class="region-percentage">8.2%</div>
-                        <div class="region-animals">2,982 especies únicas</div>
+                        <div class="region-animals">2,982 especies de Chile</div>
                     </div>
-                    <div class="region-stat">
+                    <div class="region-stat" data-percentage="8.1">
                         <div class="region-name">Región Metropolitana de Santiago</div>
                         <div class="region-percentage">8.1%</div>
-                        <div class="region-animals">2,959 especies únicas</div>
+                        <div class="region-animals">2,959 especies de Chile</div>
                     </div>
-                    <div class="region-stat">
-                        <div class="region-name">Región de La Araucanía</div>
-                        <div class="region-percentage">7.9%</div>
-                        <div class="region-animals">2,894 especies únicas</div>
+                    
+                    <!-- Indicador de más regiones -->
+                    <div class="region-stat more-regions">
+                        <div class="region-name">...</div>
+                        <div class="region-percentage">...</div>
+                        <div class="region-animals">11 regiones más</div>
                     </div>
-                    <div class="region-stat">
-                        <div class="region-name">Región del Bío-Bío</div>
-                        <div class="region-percentage">7.8%</div>
-                        <div class="region-animals">2,847 especies únicas</div>
+                    
+                    <!-- Bottom 2 regiones (2 antes de la última) -->
+                    <div class="region-stat" data-percentage="3.3">
+                        <div class="region-name">Región de Arica y Parinacota</div>
+                        <div class="region-percentage">3.3%</div>
+                        <div class="region-animals">1,187 especies de Chile</div>
                     </div>
-                    <div class="region-stat resto-chile">
-                        <div class="region-name">Resto de Chile</div>
-                        <div class="region-percentage">46.5%</div>
-                        <div class="region-animals">13,938 especies únicas</div>
+                    <div class="region-stat" data-percentage="2.0">
+                        <div class="region-name">Región de Tarapacá</div>
+                        <div class="region-percentage">2.0%</div>
+                        <div class="region-animals">737 especies de Chile</div>
                     </div>
+                </div>
+                
+                <!-- Contexto explicativo -->
+                <div class="context-info">
+                    <p class="context-text">
+                        📊 <strong>¿Cómo interpretar los datos?</strong> Cada porcentaje indica qué proporción del total 
+                        de especies de fauna chilena (100%) se encuentra presente en esa región específica.
+                    </p>
+                    <p class="context-text">
+                        🏆 <strong>Valparaíso lidera la biodiversidad:</strong> Con el 12.3% del total nacional 
+                        (4,473 especies), es la región donde se concentra la mayor diversidad de fauna del país.
+                    </p>
+                    <p class="context-text">
+                        🗺️ <strong>Distribución nacional:</strong> Las 17 regiones mostradas suman el 100% de las especies. 
+                        La diferencia es notable: Valparaíso tiene 6 veces más diversidad que Tarapacá (2.0% - 737 especies), 
+                        la región con menor porcentaje de fauna chilena.
+                    </p>
                 </div>
             </main>
         </div>
