@@ -1,104 +1,37 @@
 // Configuración del mapa MapLibre para Chile
 document.addEventListener('DOMContentLoaded', function() {
-    // Coordenadas centrales de Chile optimizadas para vista angosta
-    const CHILE_CENTER = [-71.2, -35.0];
-    
-    // Función para calcular zoom basado en distancia en kilómetros
-    function getZoomForDistance(distanceKm, latitude = -35.0) {
-        // Fórmula para calcular zoom basado en distancia y latitud
-        // Zoom = log2(156543.03392 * cos(lat) / (distanceKm * 1000 / mapWidthPixels))
-        // Asumiendo ancho del mapa de aproximadamente 400px (25% de 1600px típico)
-        const mapWidthPixels = 400;
-        const metersPerPixel = (distanceKm * 1000) / mapWidthPixels;
-        const latRad = latitude * Math.PI / 180;
-        const zoom = Math.log2(156543.03392 * Math.cos(latRad) / metersPerPixel);
-        return Math.max(1, Math.min(zoom, 18)); // Limitar entre zoom 1 y 18
-    }
-    
-    // Calcular zoom para mostrar 500km
-    const TARGET_DISTANCE_KM = 500;
-    const CHILE_ZOOM = getZoomForDistance(TARGET_DISTANCE_KM, CHILE_CENTER[1]);
-    
-    console.log(`Zoom calculado para ${TARGET_DISTANCE_KM}km: ${CHILE_ZOOM.toFixed(2)}`);
-    
-    // Límites geográficos de Chile optimizados para vista vertical
-    const CHILE_BOUNDS = [
-        [-76.5, -56.5], // Suroeste más ajustado
-        [-66.5, -17.5]  // Noreste más ajustado
-    ];
+    // Coordenadas centrales de Chile - más al sur para incluir Patagonia
+    const CHILE_CENTER = [-71.2, -39.5];
+    const CHILE_ZOOM = 3.4; // Zoom fijo
 
-    // Inicializar el mapa
+    // Inicializar el mapa sin controles ni interacción
     const map = new maplibregl.Map({
         container: 'map',
         style: '/mapas/style.json',
         center: CHILE_CENTER,
-        zoom: CHILE_ZOOM, // Usar el zoom calculado para 500km
-        maxBounds: CHILE_BOUNDS,
-        attributionControl: true,
-        // Configuración optimizada para vista vertical angosta de Chile
-        pitch: 0, // Sin inclinación para mejor vista norte-sur
-        bearing: 0, // Sin rotación
-        antialias: true // Mejor calidad visual
+        zoom: CHILE_ZOOM,
+        attributionControl: false, // Sin atribución
+        interactive: false, // Sin interacción (no zoom, no pan, no rotación)
+        // Configuración optimizada para vista estática
+        pitch: 0,
+        bearing: 0,
+        antialias: true
     });
 
-    // Agregar controles de navegación
-    map.addControl(new maplibregl.NavigationControl(), 'top-right');
-
-    // Agregar control de escala
-    map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
-
-    // Agregar control de pantalla completa
-    map.addControl(new maplibregl.FullscreenControl(), 'top-right');
-
-    // Evento cuando el mapa se carga completamente
+    // Evento de carga del mapa
     map.on('load', function() {
-        console.log('Mapa de Chile cargado correctamente');
-        console.log(`Vista inicial: ${TARGET_DISTANCE_KM}km de ancho aproximadamente`);
+        console.log('Mapa de Chile con regiones cargado desde OSM');
         
-        // Función para ajustar zoom dinámicamente según el tamaño del contenedor
-        function adjustZoomForDistance() {
-            const mapContainer = document.getElementById('map');
-            const mapWidth = mapContainer.offsetWidth;
-            const latitude = map.getCenter().lat;
-            
-            // Recalcular zoom basado en el ancho actual del contenedor
-            const metersPerPixel = (TARGET_DISTANCE_KM * 1000) / mapWidth;
-            const latRad = latitude * Math.PI / 180;
-            const optimalZoom = Math.log2(156543.03392 * Math.cos(latRad) / metersPerPixel);
-            const clampedZoom = Math.max(1, Math.min(optimalZoom, 18));
-            
-            map.setZoom(clampedZoom);
-            console.log(`Zoom ajustado para ${TARGET_DISTANCE_KM}km en ${mapWidth}px: ${clampedZoom.toFixed(2)}`);
-        }
+        // Verificar que las capas se cargaron correctamente
+        const layers = map.getStyle().layers;
+        console.log('Capas disponibles:', layers.map(l => l.id));
         
-        // Ajustar zoom inicial
-        adjustZoomForDistance();
-        
-        // Función para actualizar la información del zoom en el overlay
-        function updateZoomInfo() {
-            const currentZoom = map.getZoom();
-            const zoomElement = document.getElementById('zoom-level');
-            if (zoomElement) {
-                zoomElement.textContent = currentZoom.toFixed(2);
-            }
-        }
-        
-        // Actualizar info inicial
-        updateZoomInfo();
-        
-        // Escuchar cambios de zoom para actualizar la información
-        map.on('zoom', updateZoomInfo);
-        
-        // Escuchar cambios de tamaño de ventana para mantener los 500km
-        window.addEventListener('resize', () => {
-            setTimeout(() => {
-                adjustZoomForDistance();
-                updateZoomInfo();
-            }, 100); // Delay para esperar que termine el resize
-        });
+        // Verificar fuentes de datos
+        const sources = map.getStyle().sources;
+        console.log('Fuentes de datos:', Object.keys(sources));
     });
 
-    // Evento de error
+    // Manejo de errores
     map.on('error', function(e) {
         console.error('Error en el mapa:', e);
     });
