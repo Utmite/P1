@@ -1,6 +1,6 @@
 // Configuración del mapa de distribución de aves de Chile
 document.addEventListener('DOMContentLoaded', async function () {
-    const PREFIX = '/P1/';
+    const PREFIX = '/P1';
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 2.8;
     const CHILE_BOUNDS = [
@@ -60,7 +60,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     let currentZonePlaying = null;
     let audioReady = false;
     let audioContextStarted = false;
+    let audioUnlockRegistered = false;
     let audioStatusElement = null;
+    let pendingZoneToPlay = null;
 
     const birdRaw = await loadBirdData();
     if (!birdRaw) {
@@ -358,6 +360,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             card.addEventListener('pointerleave', () => {
                 clearZoneHighlight();
+                pendingZoneToPlay = null;
                 stopCurrentBird();
             });
 
@@ -367,22 +370,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             card.addEventListener('blur', () => {
                 clearZoneHighlight();
+                pendingZoneToPlay = null;
                 stopCurrentBird();
-            });
-
-            card.addEventListener('keyup', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    if (!audioReady) {
-                        return;
-                    }
-                    if (currentZonePlaying === zone) {
-                        stopCurrentBird();
-                    } else {
-                        playZoneBird(zone).catch((error) => {
-                            console.error('No se pudo reproducir el canto de la zona mediante teclado:', error);
-                        });
-                    }
-                }
             });
         });
     }
@@ -479,7 +468,19 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             audioReady = true;
-            audioStatus.textContent = 'Cantos listos. Ajusta el volumen y pasa el cursor por una zona para escuchar su ave característica.';
+            if (audioContextStarted) {
+                audioStatus.textContent = 'Cantos listos. Ajusta el volumen y pasa el cursor por una zona para escuchar su ave característica.';
+                if (pendingZoneToPlay) {
+                    const zoneToResume = pendingZoneToPlay;
+                    pendingZoneToPlay = null;
+                    playZoneBird(zoneToResume).catch((error) => {
+                        console.error('No se pudo iniciar el canto tras cargar los audios:', error);
+                    });
+                }
+            } else {
+                audioStatus.textContent = 'Cantos listos. Realiza un clic, toque o presiona una tecla una vez para habilitar el audio y luego pasa el cursor por una zona.';
+                registerAudioContextUnlock();
+            }
         });
 
         volumeSlider.addEventListener('input', (event) => {
@@ -493,9 +494,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     async function playZoneBird(zone) {
         if (!audioReady) {
+            pendingZoneToPlay = zone;
             if (audioStatusElement) {
                 audioStatusElement.textContent = 'Aún se están cargando los cantos...';
             }
+            return;
+        }
+        if (!audioContextStarted) {
+            pendingZoneToPlay = zone;
+            if (audioStatusElement) {
+                audioStatusElement.textContent = 'Activa el audio con un clic, toque o tecla y luego vuelve a pasar el cursor por una zona.';
+            }
+            registerAudioContextUnlock();
             return;
         }
         if (currentZonePlaying === zone) {
@@ -503,6 +513,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (currentPlayer && currentPlayer.state !== 'started') {
                 currentPlayer.start();
             }
+            pendingZoneToPlay = null;
             return;
         }
 
@@ -516,19 +527,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
 
-        if (!audioContextStarted) {
-            try {
-                await Tone.start();
-                audioContextStarted = true;
-            } catch (error) {
-                console.error('No se pudo iniciar el contexto de audio:', error);
-                if (audioStatusElement) {
-                    audioStatusElement.textContent = 'No fue posible iniciar el audio en el navegador.';
-                }
-                return;
-            }
-        }
-
+        pendingZoneToPlay = null;
         player.start();
         currentZonePlaying = zone;
         if (audioStatusElement) {
@@ -547,7 +546,8 @@ document.addEventListener('DOMContentLoaded', async function () {
             player.stop();
         }
         currentZonePlaying = null;
-        if (audioStatusElement && audioReady) {
+        pendingZoneToPlay = null;
+        if (audioStatusElement && audioReady && audioContextStarted) {
             audioStatusElement.textContent = 'Pasa el cursor por una zona para escuchar el ave de referencia.';
         }
     }
@@ -561,4 +561,51 @@ document.addEventListener('DOMContentLoaded', async function () {
             b: bigint & 255
         };
     }
+
+    function registerAudioContextUnlock() {
+        if (audioUnlockRegistered || audioContextStarted || !window.Tone) {
+            return;
+        }
+        audioUnlockRegistered = true;
+
+        const attemptUnlock = async () => {
+            if (audioContextStarted) {
+                cleanup();
+                return;
+            }
+            try {
+                await Tone.start();
+                audioContextStarted = true;
+                if (audioStatusElement) {
+                    audioStatusElement.textContent = 'Audio habilitado. Pasa el cursor por una zona para escuchar su ave representativa.';
+                }
+                const zoneToResume = pendingZoneToPlay;
+                if (zoneToResume) {
+                    pendingZoneToPlay = null;
+                    playZoneBird(zoneToResume).catch((error) => {
+                        console.error('No se pudo reanudar el canto tras habilitar el audio:', error);
+                    });
+                }
+            } catch (error) {
+                console.error('No se pudo habilitar el audio tras la interacción del usuario:', error);
+                if (audioStatusElement) {
+                    audioStatusElement.textContent = 'No fue posible habilitar el audio en el navegador.';
+                }
+                audioUnlockRegistered = false;
+                return;
+            }
+            cleanup();
+        };
+
+        const cleanup = () => {
+            document.removeEventListener('pointerdown', attemptUnlock);
+            document.removeEventListener('touchstart', attemptUnlock);
+            document.removeEventListener('keydown', attemptUnlock);
+        };
+
+        document.addEventListener('pointerdown', attemptUnlock, { passive: true });
+        document.addEventListener('touchstart', attemptUnlock, { passive: true });
+        document.addEventListener('keydown', attemptUnlock);
+    }
+
 });
