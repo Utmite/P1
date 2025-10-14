@@ -1,4 +1,4 @@
-/* Distribución de la Fauna de Chile */
+/* Distribución de la biodiversidad de aves de Chile */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -97,12 +97,55 @@ body {
   color: #525252;
 }
 
+.zone-legend {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.zone-legend-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.zone-legend-items {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.zone-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 500;
+}
+
+.zone-swatch {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.zone-swatch--norte { background: #f97316; }
+.zone-swatch--centro { background: #3b82f6; }
+.zone-swatch--sur { background: #10b981; }
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
 /* Region Cards */
@@ -119,26 +162,15 @@ body {
   justify-content: space-between;
 }
 
+.zone-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
 .region-stat:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-}
-
-.region-stat.more-regions {
-  background: #fafafa;
-  border: 2px dashed #e5e5e5;
-  color: #525252;
-  opacity: 0.7;
-  font-style: italic;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.region-stat.more-regions:hover {
-  transform: none;
-  opacity: 0.9;
 }
 
 .region-name {
@@ -170,6 +202,22 @@ body {
   margin-top: auto;
 }
 
+.zone-detail {
+  font-size: 0.75rem;
+  color: #111827;
+  font-weight: 500;
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
+.zone-bird {
+  font-size: 0.78rem;
+  color: #0f172a;
+  font-weight: 600;
+  margin-top: 0.45rem;
+  text-align: center;
+}
+
 /* Context Info */
 .context-info {
   background: white;
@@ -189,6 +237,83 @@ body {
 
 .context-text:last-child {
   margin-bottom: 0;
+}
+
+/* Audio section */
+.audio-section {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.625rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.audio-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.audio-description {
+  font-size: 0.85rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+.audio-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.audio-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+#mix-control {
+  flex: 1;
+  min-width: 140px;
+}
+
+.audio-button {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  min-width: 150px;
+}
+
+.audio-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.audio-button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.audio-button.is-active {
+  background: #10b981;
+}
+
+.audio-status {
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin-bottom: 0.35rem;
+}
+
+.audio-hint {
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
 /* Responsive */
@@ -212,8 +337,16 @@ body {
   }
   
   .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(3, 1fr);
+    grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 0.5rem;
+  }
+
+  .audio-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #mix-control {
+    width: 100%;
   }
 }

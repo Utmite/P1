@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distribución de la Fauna de Chile</title>
+    <title>Distribución de la Biodiversidad de Aves de Chile</title>
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,65 +19,29 @@
         <!-- Sección de contenido (2/3 del ancho) -->
         <div class="content-section">
             <header class="header">
-                <h1>Distribución de la Fauna de Chile</h1>
-                <p class="subtitle">📊 Porcentaje de especies chilenas presentes en cada región administrativa</p>
-                <div class="legend">
-                    <div class="legend-title">Concentración de Especies por Región</div>
-                    <div class="legend-gradient">
-                        <span class="legend-label">Menor</span>
-                        <div class="gradient-bar"></div>
-                        <span class="legend-label">Mayor</span>
-                    </div>
-                    <p class="legend-description">
-                        Cada región muestra qué porcentaje del total de especies de Chile se encuentra en su territorio
-                    </p>
-                </div>
+                <h1>Distribución de la Biodiversidad de Aves de Chile</h1>
+                <p class="subtitle">📊 Porcentaje de especies de aves chilenas agrupadas en las tres macrozonas: Norte, Centro y Sur</p>
             </header>
             
             <main class="main-content">
-                <div class="stats-grid">
-                    <!-- Top 3 regiones -->
-                    <div class="region-stat" data-percentage="12.3">
-                        <div class="region-name">Región de Valparaíso</div>
-                        <div class="region-percentage">12.3%</div>
-                        <div class="region-animals">4,473 especies de Chile</div>
+                <div class="stats-grid" id="zone-stats"></div>
+
+                <section class="audio-section">
+                    <h2 class="audio-title">🎶 Cantos representativos de las aves de Chile</h2>
+                    <p class="audio-description">El audio se activa automáticamente: ajusta hasta un máximo del 50% de volumen y pasa el cursor por una zona para escuchar el ave característica.</p>
+                    <div class="audio-controls">
+                        <label for="mix-control" class="audio-label">
+                            Intensidad del canto: <span id="mix-value">25%</span>
+                        </label>
+                        <input type="range" id="mix-control" min="0" max="0.5" step="0.05" value="0.25" aria-label="Intensidad del canto representativo de la zona">
                     </div>
-                    <div class="region-stat" data-percentage="9.1">
-                        <div class="region-name">Región de Los Lagos</div>
-                        <div class="region-percentage">9.1%</div>
-                        <div class="region-animals">3,330 especies de Chile</div>
-                    </div>
-                    <div class="region-stat" data-percentage="8.2">
-                        <div class="region-name">Región de Magallanes y Antártica Chilena</div>
-                        <div class="region-percentage">8.2%</div>
-                        <div class="region-animals">2,982 especies de Chile</div>
-                    </div>
-                    <!-- Indicador de más regiones -->
-                    <div class="region-stat more-regions">
-                        <div class="region-name">...</div>
-                        <div class="region-percentage">...</div>
-                        <div class="region-animals">11 regiones más</div>
-                    </div>
-                    
-                    <!-- Bottom 2 regiones (2 antes de la última) -->
-                    <div class="region-stat" data-percentage="3.3">
-                        <div class="region-name">Región de Arica y Parinacota</div>
-                        <div class="region-percentage">3.3%</div>
-                        <div class="region-animals">1,187 especies de Chile</div>
-                    </div>
-                    <div class="region-stat" data-percentage="2.0">
-                        <div class="region-name">Región de Tarapacá</div>
-                        <div class="region-percentage">2.0%</div>
-                        <div class="region-animals">737 especies de Chile</div>
-                    </div>
-                </div>
-                
-                <!-- Contexto explicativo -->
+                    <p id="audio-status" class="audio-status">Cargando cantos...</p>
+                    <p class="audio-hint">💡 Consejo: interactúa con los paneles de cada zona para escuchar su ave representativa.</p>
+                </section>
+
                 <div class="context-info">
-                    <p class="context-text">
-                        🏆 <strong>Valparaíso lidera la biodiversidad:</strong> Con el 12.3% del total nacional 
-                        (4,473 especies), es la región donde se concentra la mayor diversidad de fauna del país.
-                    </p>
+                    <p class="context-text" id="context-primary"></p>
+                    <p class="context-text" id="context-secondary"></p>
                 </div>
             </main>
         </div>
