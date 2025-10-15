@@ -1,6 +1,48 @@
 // Configuración del mapa de distribución de aves de Chile
 document.addEventListener('DOMContentLoaded', async function () {
     const PREFIX = '/P1';
+    // Modal para activar audio
+    function createAudioModal() {
+        if (document.getElementById('audio-modal')) return;
+        const modal = document.createElement('div');
+        modal.id = 'audio-modal';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.background = 'rgba(0,0,0,0.45)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '9999';
+        modal.innerHTML = `
+            <div style="background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(0,0,0,0.18); padding: 2.2rem 2.5rem; max-width: 350px; text-align: center;">
+                <h2 style="font-size: 1.3rem; margin-bottom: 1rem; color: #10b981;">🔊 Activar audio</h2>
+                <p style="font-size: 1rem; color: #222; margin-bottom: 1.2rem;">Para escuchar los cantos de aves, es necesario habilitar el audio.<br><br><strong>Haz clic en el botón para activar el audio.</strong></p>
+                <button id="audio-modal-btn" style="background: #10b981; color: #fff; border: none; border-radius: 6px; padding: 0.7rem 1.5rem; font-size: 1.1rem; cursor: pointer; font-weight: 600;">Activar audio</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('audio-modal-btn').onclick = async function() {
+            if (window.Tone) {
+                try {
+                    await Tone.start();
+                    audioContextStarted = true;
+                    if (audioStatusElement) {
+                        updateAudioStatusText();
+                    }
+                } catch (e) {
+                    if (audioStatusElement) {
+                        audioStatusElement.textContent = 'No fue posible habilitar el audio en el navegador.';
+                    }
+                }
+            }
+            modal.remove();
+            // refrescar estado
+            updateAudioStatusText();
+        };
+    }
     const CHILE_CENTER = [-71.2, -39.5];
     const CHILE_ZOOM = 2.8;
     const CHILE_BOUNDS = [
@@ -39,23 +81,52 @@ document.addEventListener('DOMContentLoaded', async function () {
     };
     const EMPTY_FILTER_VALUE = '__none__';
     const ZONE_TYPICAL_BIRDS = {
-        Norte: {
-            name: 'Phoenicoparrus jamesi - Puna flamingo',
-            audio: PREFIX + '/audio/flamingo.mp3'
-        },
-        Centro: {
-            name: 'Himantopus mexicanus - White-backed stilt',
-            audio: PREFIX + '/audio/perrito.mp3'
-        },
-        Sur: {
-            name: 'Scelorchilus rubecula - Chucao tapaculo',
-            audio: PREFIX + '/audio/chucao.mp3'
-        }
+        Norte: [
+            {
+                name: 'Phoenicoparrus jamesi - Puna flamingo',
+                audio: PREFIX + '/audio/flamingo.mp3'
+            },
+            {
+                name: 'Phoenicoparrus andinus - Andean flamingo',
+                audio: PREFIX + '/audio/flamingo.mp3'
+            },
+            {
+                name: 'Phoenicoparrus chilensis - Chilean flamingo',
+                audio: PREFIX + '/audio/flamingo.mp3'
+            }
+        ],
+        Centro: [
+            {
+                name: 'Himantopus mexicanus - White-backed stilt',
+                audio: PREFIX + '/audio/perrito.mp3'
+            },
+            {
+                name: 'Recurvirostra andina - Andean avocet',
+                audio: PREFIX + '/audio/perrito.mp3'
+            },
+            {
+                name: 'Charadrius modestus - Rufous-chested plover',
+                audio: PREFIX + '/audio/perrito.mp3'
+            }
+        ],
+        Sur: [
+            {
+                name: 'Scelorchilus rubecula - Chucao tapaculo',
+                audio: PREFIX + '/audio/chucao.mp3'
+            },
+            {
+                name: 'Pteroptochos tarnii - Black-throated huet-huet',
+                audio: PREFIX + '/audio/chucao.mp3'
+            },
+            {
+                name: 'Eugralla paradoxa - Ochre-flanked tapaculo',
+                audio: PREFIX + '/audio/chucao.mp3'
+            }
+        ]
     };
 
     let birdDataByRegion = new Map();
     let zoneTotals = [];
-    let audioGain = null;
     let zonePlayers = new Map();
     let currentZonePlaying = null;
     let audioReady = false;
@@ -63,6 +134,36 @@ document.addEventListener('DOMContentLoaded', async function () {
     let audioUnlockRegistered = false;
     let audioStatusElement = null;
     let pendingZoneToPlay = null;
+    let currentZoneInfo = null;
+    let currentTimeouts = [];
+    let lastHoveredZone = null;
+
+    // Mantener referencia actualizada al elemento de estado de audio
+    function refreshAudioStatusElement() {
+        audioStatusElement = document.getElementById('audio-status');
+    }
+
+    function updateAudioStatusText() {
+        refreshAudioStatusElement();
+        if (!audioStatusElement) return;
+        if (!window.Tone) {
+            audioStatusElement.textContent = 'ToneJS no está disponible en esta página.';
+            return;
+        }
+        if (audioContextStarted && audioReady) {
+            audioStatusElement.textContent = 'Audio habilitado. Pasa el cursor por una zona para escuchar sus aves características.';
+            return;
+        }
+        if (audioContextStarted && !audioReady) {
+            audioStatusElement.textContent = 'Audio habilitado. Cargando cantos...';
+            return;
+        }
+        if (!audioContextStarted && audioReady) {
+            audioStatusElement.textContent = 'Cantos cargados. Usa "Activar audio" si no se inicia automáticamente al pasar el cursor.';
+            return;
+        }
+        audioStatusElement.textContent = 'Cargando cantos...';
+    }
 
     const birdRaw = await loadBirdData();
     if (!birdRaw) {
@@ -74,14 +175,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const map = createMap();
 
-    renderZoneStats(zoneTotals);
-    styleZoneCards();
-    attachZoneCardInteractions();
     updateContextInfo(zoneTotals);
 
     map.on('load', async () => {
         await cargarVisualizacion(map, birdDataByRegion);
-        attachZoneCardInteractions();
+        attachMapInteractions(map);
     });
 
     map.on('error', (event) => {
@@ -91,6 +189,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     window.chileMap = map;
 
     setupAudioControls();
+    
+    // Mostrar modal de audio al inicio siempre
+    createAudioModal();
 
     async function loadBirdData() {
         try {
@@ -131,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             let totalSpecies = 0;
             let totalPercentage = 0;
             const breakdown = [];
-            const typicalBird = ZONE_TYPICAL_BIRDS[zone]?.name || 'Ave representativa';
+            const typicalBirds = ZONE_TYPICAL_BIRDS[zone] || [];
 
             regionNames.forEach((regionName) => {
                 const record = birdMap.get(regionName);
@@ -153,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 breakdown,
                 topRegion: breakdown[0]?.name || null,
                 regionCount: breakdown.length,
-                typicalBird
+                typicalBirds
             };
         });
     }
@@ -294,86 +395,117 @@ document.addEventListener('DOMContentLoaded', async function () {
         return ZONE_ORDER.find((zone) => ZONE_GROUPS[zone].includes(regionName)) || null;
     }
 
-    function renderZoneStats(data) {
-        const grid = document.getElementById('zone-stats');
-        if (!grid) {
-            return;
-        }
-
-        grid.innerHTML = '';
-        data.forEach((zoneData) => {
-            const card = document.createElement('article');
-            card.className = 'region-stat zone-card';
-            card.dataset.zone = zoneData.zone;
-            card.tabIndex = 0;
-            card.setAttribute('role', 'button');
-            card.setAttribute('aria-label', `Zona ${zoneData.zone} con ${zoneData.totalPercentage.toFixed(1)} por ciento de las especies de aves; ave típica ${zoneData.typicalBird}`);
-
-            const topBreakdown = zoneData.breakdown[0];
-            const topDetail = topBreakdown
-                ? `Mayor aporte: ${topBreakdown.name} (${topBreakdown.percentage.toFixed(1)}%)`
-                : 'Sin datos detallados para esta zona';
-
-            card.innerHTML = `
-                <div class="region-name">Zona ${zoneData.zone}</div>
-                <div class="region-percentage">${zoneData.totalPercentage.toFixed(1)}%</div>
-                <div class="region-animals">${zoneData.totalSpecies.toLocaleString('es-CL')} especies de aves registradas</div>
-                <div class="zone-bird">Ave típica: ${zoneData.typicalBird}</div>
-                <div class="zone-detail">${topDetail}</div>
-            `;
-
-            grid.appendChild(card);
-        });
-    }
-
-    function styleZoneCards() {
-        const cards = document.querySelectorAll('.zone-card');
-        cards.forEach((card) => {
-            const zone = card.dataset.zone;
-            const color = ZONE_COLORS[zone] || '#6b7280';
-            const { r, g, b } = hexToRgb(color);
-            card.style.background = `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.2), rgba(${r}, ${g}, ${b}, 0.65))`;
-            card.style.borderColor = color;
-            const percentage = card.querySelector('.region-percentage');
-            if (percentage) {
-                percentage.style.color = '#0f172a';
-            }
-        });
-    }
-
-    function attachZoneCardInteractions() {
-        const cards = document.querySelectorAll('.zone-card');
-        cards.forEach((card) => {
-            if (card.dataset.listenersAttached === 'true') {
+    function attachMapInteractions(mapInstance) {
+        // Hover para mostrar información de la zona (seguimiento continuo)
+        mapInstance.on('mousemove', 'aves-zonas-fill', (e) => {
+            const zone = e.features?.[0]?.properties?.zone;
+            if (!zone) {
                 return;
             }
-            card.dataset.listenersAttached = 'true';
-
-            const zone = card.dataset.zone;
-
-            card.addEventListener('pointerenter', () => {
+            if (zone !== lastHoveredZone) {
+                lastHoveredZone = zone;
+                showZoneInfo(zone);
                 setZoneHighlight(zone);
                 playZoneBird(zone).catch((error) => {
                     console.error('No se pudo reproducir el canto de la zona:', error);
                 });
-            });
-
-            card.addEventListener('pointerleave', () => {
-                clearZoneHighlight();
-                pendingZoneToPlay = null;
-                stopCurrentBird();
-            });
-
-            card.addEventListener('focus', () => {
-                setZoneHighlight(zone);
-            });
-
-            card.addEventListener('blur', () => {
-                clearZoneHighlight();
-                pendingZoneToPlay = null;
-                stopCurrentBird();
-            });
+            }
         });
+
+        mapInstance.on('mouseleave', 'aves-zonas-fill', () => {
+            hideZoneInfo();
+            clearZoneHighlight();
+            stopCurrentBird();
+            lastHoveredZone = null;
+        });
+
+        // Cambiar cursor al pasar sobre las zonas
+        mapInstance.on('mouseenter', 'aves-zonas-fill', () => {
+            mapInstance.getCanvas().style.cursor = 'pointer';
+        });
+
+        mapInstance.on('mouseleave', 'aves-zonas-fill', () => {
+            mapInstance.getCanvas().style.cursor = '';
+        });
+    }
+
+    function showZoneInfo(zoneName) {
+        const zoneData = zoneTotals.find(z => z.zone === zoneName);
+        if (!zoneData) return;
+
+        const zoneInfoContent = document.getElementById('zone-info-content');
+        if (!zoneInfoContent) return;
+
+        // Ocultar el context-info cuando se hace hover
+        const contextInfo = document.querySelector('.context-info');
+        if (contextInfo) {
+            contextInfo.style.display = 'none';
+        }
+
+        const topBreakdown = zoneData.breakdown[0];
+        const topDetail = topBreakdown
+            ? `Mayor aporte: ${topBreakdown.name} (${topBreakdown.percentage.toFixed(1)}%)`
+            : 'Sin datos detallados para esta zona';
+
+        const birdsList = zoneData.typicalBirds.map(bird => 
+            `<li class="zone-bird-item">${bird.name}</li>`
+        ).join('');
+
+        const zoneColor = ZONE_COLORS[zoneData.zone] || '#10b981';
+        const zoneColorRgb = hexToRgb(zoneColor);
+        
+        zoneInfoContent.innerHTML = `
+            <div class="zone-info-active">
+                <div class="zone-name" style="color: ${zoneColor};">Zona ${zoneData.zone}</div>
+                <div class="zone-percentage" style="color: ${zoneColor};">${zoneData.totalPercentage.toFixed(1)}%</div>
+                <div class="zone-species" style="background: rgba(${zoneColorRgb.r}, ${zoneColorRgb.g}, ${zoneColorRgb.b}, 0.1); border-color: rgba(${zoneColorRgb.r}, ${zoneColorRgb.g}, ${zoneColorRgb.b}, 0.2);">${zoneData.totalSpecies.toLocaleString('es-CL')} especies de aves registradas</div>
+                <div class="zone-detail">${topDetail}</div>
+                <div class="zone-birds">
+                    <div class="zone-birds-title">Aves características:</div>
+                    <ul class="zone-bird-list">${birdsList}</ul>
+                </div>
+                <div class="audio-info" style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(${zoneColorRgb.r}, ${zoneColorRgb.g}, ${zoneColorRgb.b}, 0.1); border-radius: 8px; border: 1px solid rgba(${zoneColorRgb.r}, ${zoneColorRgb.g}, ${zoneColorRgb.b}, 0.2);">
+                    <p style="font-size: 0.8rem; color: rgba(26, 26, 26, 0.8); margin: 0; text-align: center; font-weight: 500;">🎶 Escuchando cantos de aves características</p>
+                    <p id="audio-status" style="font-size: 0.75rem; color: rgba(26, 26, 26, 0.6); margin: 0.5rem 0 0 0; text-align: center;">Cargando cantos...</p>
+                </div>
+            </div>
+        `;
+
+        currentZoneInfo = zoneName;
+        // actualizar referencia y texto de estado de audio si existe
+        updateAudioStatusText();
+    }
+
+    function hideZoneInfo() {
+        const zoneInfoContent = document.getElementById('zone-info-content');
+        if (!zoneInfoContent) return;
+
+        // Mostrar el context-info cuando se quita el hover
+        const contextInfo = document.querySelector('.context-info');
+        if (contextInfo) {
+            contextInfo.style.display = 'block';
+        }
+
+        zoneInfoContent.innerHTML = `
+            <div class="zone-info-placeholder">
+                <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: #1a1a1a;">🎯 Cómo usar esta infografía</h3>
+                <p style="margin-bottom: 0.75rem; font-size: 0.9rem;">Pasa el cursor sobre las zonas del mapa para:</p>
+                <ul style="text-align: left; max-width: 350px; margin: 0 auto;">
+                    <li style="margin-bottom: 0.4rem; font-size: 0.85rem;">📊 Ver estadísticas de biodiversidad</li>
+                    <li style="margin-bottom: 0.4rem; font-size: 0.85rem;">🎵 Escuchar cantos de aves características</li>
+                    <li style="margin-bottom: 0.4rem; font-size: 0.85rem;">🔊 El volumen indica el ranking de especies</li>
+                    <li style="margin-bottom: 0.4rem; font-size: 0.85rem;">🐦 Conocer las 3 aves típicas por zona</li>
+                </ul>
+                <div class="audio-info" style="margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <p style="font-size: 0.8rem; color: rgba(26, 26, 26, 0.8); margin: 0; text-align: center; font-weight: 500;">🎶 Pasa el cursor por una zona para escuchar las aves características</p>
+                    <p id="audio-status" style="font-size: 0.75rem; color: rgba(26, 26, 26, 0.6); margin: 0.5rem 0 0 0; text-align: center;">Cargando cantos...</p>
+                </div>
+            </div>
+        `;
+
+        currentZoneInfo = null;
+        // actualizar referencia y texto de estado de audio si existe
+        updateAudioStatusText();
     }
 
     function setZoneHighlight(zoneName) {
@@ -408,57 +540,67 @@ document.addEventListener('DOMContentLoaded', async function () {
             : '';
 
         if (topBreakdown) {
-            secondary.innerHTML = `📍 Mayor aporte regional: <strong>${topBreakdown.name}</strong> con el ${topBreakdown.percentage.toFixed(1)}% del total nacional de aves. Ave típica por zona: ${ZONE_ORDER.map((zone) => `${zone}: ${ZONE_TYPICAL_BIRDS[zone]?.name || 'sin definir'}`).join(' · ')}.${bottomText}`;
+            const birdsInfo = ZONE_ORDER.map((zone) => {
+                const birds = ZONE_TYPICAL_BIRDS[zone] || [];
+                const firstBird = birds[0]?.name || 'sin definir';
+                return `${zone}: ${firstBird}`;
+            }).join(' · ');
+            secondary.innerHTML = `📍 Mayor aporte regional: <strong>${topBreakdown.name}</strong> con el ${topBreakdown.percentage.toFixed(1)}% del total nacional de aves. Ave típica por zona: ${birdsInfo}.${bottomText}`;
         } else {
-            secondary.textContent = `📍 Sin desglose regional disponible. Ave típica por zona: ${ZONE_ORDER.map((zone) => `${zone}: ${ZONE_TYPICAL_BIRDS[zone]?.name || 'sin definir'}`).join(' · ')}.${bottomText}`;
+            const birdsInfo = ZONE_ORDER.map((zone) => {
+                const birds = ZONE_TYPICAL_BIRDS[zone] || [];
+                const firstBird = birds[0]?.name || 'sin definir';
+                return `${zone}: ${firstBird}`;
+            }).join(' · ');
+            secondary.textContent = `📍 Sin desglose regional disponible. Ave típica por zona: ${birdsInfo}.${bottomText}`;
         }
     }
 
     function setupAudioControls() {
-        const volumeSlider = document.getElementById('mix-control');
-        const volumeLabel = document.getElementById('mix-value');
         const audioStatus = document.getElementById('audio-status');
         audioStatusElement = audioStatus;
 
-        if (!volumeSlider || !volumeLabel || !audioStatus) {
-            console.warn('Controles de audio no encontrados en el DOM.');
+        if (!audioStatus) {
+            console.warn('Elemento de estado de audio no encontrado en el DOM.');
             return;
         }
-
-        const initialValue = parseFloat(volumeSlider.value) || 0;
-        volumeLabel.textContent = `${Math.round(initialValue * 100)}%`;
 
         if (!window.Tone) {
             audioStatus.textContent = 'ToneJS no está disponible en esta página.';
             return;
         }
 
-        audioGain = new Tone.Gain(initialValue).toDestination();
-
         let hasConfiguredAudio = false;
-        const loadPromises = Object.entries(ZONE_TYPICAL_BIRDS).map(([zone, config]) => new Promise((resolve) => {
-            if (!config.audio) {
-                console.info(`Sin ruta de audio definida para la zona ${zone}.`);
-                zonePlayers.set(zone, null);
+        const loadPromises = Object.entries(ZONE_TYPICAL_BIRDS).map(([zone, birds]) => new Promise((resolve) => {
+            if (!birds || birds.length === 0) {
+                console.info(`Sin aves definidas para la zona ${zone}.`);
+                zonePlayers.set(zone, []);
                 return resolve();
             }
 
             hasConfiguredAudio = true;
-            const player = new Tone.Player({
-                url: config.audio,
-                autostart: false,
-                onload: resolve,
-                onerror: (error) => {
-                    console.error(`No se pudo cargar el canto de ${config.name}`, error);
-                    zonePlayers.set(zone, null);
-                    resolve();
+            const players = birds.map(bird => {
+                if (!bird.audio) {
+                    console.info(`Sin ruta de audio definida para ${bird.name}.`);
+                    return null;
                 }
-            });
-            player.loop = true; // Mantiene el canto en loop mientras el cursor permanece sobre la zona
-            player.fadeIn = 0.3;
-            player.fadeOut = 0.3;
-            player.connect(audioGain);
-            zonePlayers.set(zone, player);
+
+                const player = new Tone.Player({
+                    url: bird.audio,
+                    autostart: false,
+                    onload: () => {},
+                    onerror: (error) => {
+                        console.error(`No se pudo cargar el canto de ${bird.name}`, error);
+                    }
+                });
+                player.loop = true;
+                player.fadeIn = 0.3;
+                player.fadeOut = 0.3;
+                return player;
+            }).filter(Boolean);
+
+            zonePlayers.set(zone, players);
+            resolve();
         }));
 
         Promise.all(loadPromises).then(() => {
@@ -468,27 +610,30 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             audioReady = true;
-            if (audioContextStarted) {
-                audioStatus.textContent = 'Cantos listos. Ajusta el volumen y pasa el cursor por una zona para escuchar su ave característica.';
-                if (pendingZoneToPlay) {
-                    const zoneToResume = pendingZoneToPlay;
-                    pendingZoneToPlay = null;
-                    playZoneBird(zoneToResume).catch((error) => {
-                        console.error('No se pudo iniciar el canto tras cargar los audios:', error);
-                    });
+            
+            // Intentar activar el audio automáticamente
+            const tryAutoStart = async () => {
+                try {
+                    await Tone.start();
+                    audioContextStarted = true;
+                    audioStatus.textContent = 'Cantos listos. Pasa el cursor por una zona para escuchar sus aves características.';
+                    if (pendingZoneToPlay) {
+                        const zoneToResume = pendingZoneToPlay;
+                        pendingZoneToPlay = null;
+                        playZoneBird(zoneToResume).catch((error) => {
+                            console.error('No se pudo iniciar el canto tras cargar los audios:', error);
+                        });
+                    }
+                } catch (error) {
+                    console.log('No se pudo activar el audio automáticamente, se requiere interacción del usuario');
+                    audioStatus.textContent = 'Cantos listos. Realiza un clic, toque o presiona una tecla una vez para habilitar el audio y luego pasa el cursor por una zona.';
+                    registerAudioContextUnlock();
                 }
-            } else {
-                audioStatus.textContent = 'Cantos listos. Realiza un clic, toque o presiona una tecla una vez para habilitar el audio y luego pasa el cursor por una zona.';
-                registerAudioContextUnlock();
-            }
-        });
-
-        volumeSlider.addEventListener('input', (event) => {
-            const value = parseFloat(event.target.value) || 0;
-            volumeLabel.textContent = `${Math.round(value * 100)}%`;
-            if (audioGain) {
-                audioGain.gain.rampTo(value, 0.1);
-            }
+            };
+            
+            tryAutoStart();
+            // actualizar estado visual del audio
+            updateAudioStatusText();
         });
     }
 
@@ -501,38 +646,80 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
         if (!audioContextStarted) {
-            pendingZoneToPlay = zone;
-            if (audioStatusElement) {
-                audioStatusElement.textContent = 'Activa el audio con un clic, toque o tecla y luego vuelve a pasar el cursor por una zona.';
+            // Intentar activar el audio automáticamente
+            try {
+                await Tone.start();
+                audioContextStarted = true;
+                if (audioStatusElement) {
+                    updateAudioStatusText();
+                }
+            } catch (error) {
+                console.log('No se pudo activar el audio automáticamente, se requiere interacción del usuario');
+                pendingZoneToPlay = zone;
+                if (audioStatusElement) {
+                    updateAudioStatusText();
+                }
+                registerAudioContextUnlock();
+                createAudioModal();
+                return;
             }
-            registerAudioContextUnlock();
-            return;
         }
+        // Si ya estamos reproduciendo la misma zona, no hacer nada
         if (currentZonePlaying === zone) {
-            const currentPlayer = zonePlayers.get(zone);
-            if (currentPlayer && currentPlayer.state !== 'started') {
-                currentPlayer.start();
-            }
             pendingZoneToPlay = null;
             return;
         }
 
+        // Detener la zona actual si hay una reproduciéndose
         stopCurrentBird();
 
-        const player = zonePlayers.get(zone);
-        if (!player) {
+        const players = zonePlayers.get(zone);
+        if (!players || players.length === 0) {
             if (audioStatusElement) {
                 audioStatusElement.textContent = `La zona ${zone} no tiene audio configurado. Define la ruta en ZONE_TYPICAL_BIRDS.`;
             }
             return;
         }
 
+        // Calcular el volumen basado en el ranking de especies (menor a mayor)
+        const zoneData = zoneTotals.find(z => z.zone === zone);
+        
+        // Ordenar zonas por cantidad de especies para determinar ranking
+        const sortedZones = [...zoneTotals].sort((a, b) => a.totalSpecies - b.totalSpecies);
+        const zoneRank = sortedZones.findIndex(z => z.zone === zone);
+        
+        // Asignar volumen según posición: 1ra (menos especies) = 20%, 2da = 50%, 3ra (más especies) = 100%
+        const volumeLevels = [0.1, 0.4, 1.0];
+        const volumePercentage = volumeLevels[zoneRank] || 0.2;
+
         pendingZoneToPlay = null;
-        player.start();
+        
+        // Limpiar timeouts anteriores
+        currentTimeouts.forEach(timeout => clearTimeout(timeout));
+        currentTimeouts = [];
+        
+        // Reproducir todos los sonidos de la zona con el volumen basado en el porcentaje
+        players.forEach((player, index) => {
+            if (player) {
+                // Crear un gain individual para cada player
+                const gainNode = new Tone.Gain(volumePercentage).toDestination();
+                player.disconnect();
+                player.connect(gainNode);
+                
+                // Agregar un pequeño delay entre los sonidos para crear un efecto de coro
+                const delay = index * 0.5; // 0.5 segundos entre cada sonido
+                const timeout = setTimeout(() => {
+                    player.start();
+                }, delay * 1000);
+                currentTimeouts.push(timeout);
+            }
+        });
+
         currentZonePlaying = zone;
         if (audioStatusElement) {
-            const birdName = ZONE_TYPICAL_BIRDS[zone]?.name || 'ave típica';
-            audioStatusElement.textContent = `Reproduciendo el canto del ${birdName} (zona ${zone}).`;
+            const birds = ZONE_TYPICAL_BIRDS[zone] || [];
+            const birdNames = birds.map(b => b.name).join(', ');
+            audioStatusElement.textContent = `Reproduciendo cantos de ${birdNames} (zona ${zone}) - Volumen: ${Math.round(volumePercentage * 100)}%`;
         }
     }
 
@@ -541,15 +728,22 @@ document.addEventListener('DOMContentLoaded', async function () {
             return;
         }
 
-        const player = zonePlayers.get(currentZonePlaying);
-        if (player && player.state === 'started') {
-            player.stop();
+        // Limpiar todos los timeouts pendientes
+        currentTimeouts.forEach(timeout => clearTimeout(timeout));
+        currentTimeouts = [];
+
+        const players = zonePlayers.get(currentZonePlaying);
+        if (players && players.length > 0) {
+            players.forEach(player => {
+                if (player && player.state === 'started') {
+                    player.stop();
+                }
+            });
         }
         currentZonePlaying = null;
         pendingZoneToPlay = null;
-        if (audioStatusElement && audioReady && audioContextStarted) {
-            audioStatusElement.textContent = 'Pasa el cursor por una zona para escuchar el ave de referencia.';
-        }
+        // actualizar estado visual
+        updateAudioStatusText();
     }
 
     function hexToRgb(hex) {
@@ -561,6 +755,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             b: bigint & 255
         };
     }
+
 
     function registerAudioContextUnlock() {
         if (audioUnlockRegistered || audioContextStarted || !window.Tone) {
@@ -577,7 +772,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 await Tone.start();
                 audioContextStarted = true;
                 if (audioStatusElement) {
-                    audioStatusElement.textContent = 'Audio habilitado. Pasa el cursor por una zona para escuchar su ave representativa.';
+                    audioStatusElement.textContent = 'Audio habilitado. Pasa el cursor por una zona para escuchar sus aves características.';
                 }
                 const zoneToResume = pendingZoneToPlay;
                 if (zoneToResume) {
@@ -586,6 +781,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         console.error('No se pudo reanudar el canto tras habilitar el audio:', error);
                     });
                 }
+                removeAudioModal();
             } catch (error) {
                 console.error('No se pudo habilitar el audio tras la interacción del usuario:', error);
                 if (audioStatusElement) {
@@ -601,11 +797,23 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.removeEventListener('pointerdown', attemptUnlock);
             document.removeEventListener('touchstart', attemptUnlock);
             document.removeEventListener('keydown', attemptUnlock);
+            document.removeEventListener('pointermove', attemptUnlock);
+            document.removeEventListener('mousemove', attemptUnlock);
         };
 
         document.addEventListener('pointerdown', attemptUnlock, { passive: true });
         document.addEventListener('touchstart', attemptUnlock, { passive: true });
         document.addEventListener('keydown', attemptUnlock);
+        document.addEventListener('pointermove', attemptUnlock, { passive: true });
+            document.addEventListener('mousemove', attemptUnlock, { passive: true });
+
+            // Mostrar modal para guiar al usuario si aún no ha activado el audio
+            createAudioModal();
+    }
+
+    function removeAudioModal() {
+        const modal = document.getElementById('audio-modal');
+        if (modal) modal.remove();
     }
 
 });
