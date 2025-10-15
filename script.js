@@ -85,14 +85,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             {
                 name: 'Phoenicoparrus jamesi - Puna flamingo',
                 audio: PREFIX + '/audio/flamingo.mp3'
-            },
-            {
-                name: 'Phoenicoparrus andinus - Andean flamingo',
-                audio: PREFIX + '/audio/flamingo.mp3'
-            },
-            {
-                name: 'Phoenicoparrus chilensis - Chilean flamingo',
-                audio: PREFIX + '/audio/flamingo.mp3'
             }
         ],
         Centro: [
@@ -100,28 +92,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 name: 'Himantopus mexicanus - White-backed stilt',
                 audio: PREFIX + '/audio/perrito.mp3'
             },
-            {
-                name: 'Recurvirostra andina - Andean avocet',
-                audio: PREFIX + '/audio/perrito.mp3'
-            },
-            {
-                name: 'Charadrius modestus - Rufous-chested plover',
-                audio: PREFIX + '/audio/perrito.mp3'
-            }
         ],
         Sur: [
             {
                 name: 'Scelorchilus rubecula - Chucao tapaculo',
                 audio: PREFIX + '/audio/chucao.mp3'
             },
-            {
-                name: 'Pteroptochos tarnii - Black-throated huet-huet',
-                audio: PREFIX + '/audio/chucao.mp3'
-            },
-            {
-                name: 'Eugralla paradoxa - Ochre-flanked tapaculo',
-                audio: PREFIX + '/audio/chucao.mp3'
-            }
         ]
     };
 
