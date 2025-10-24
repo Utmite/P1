@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('✓ Audios precargados y listos');
     }
 
-    // Reproducir bandada (tamaño proporcional a cantidad de especies)
+    // Reproducir bandada
     function playBirdFlock(regionName) {
         // Verificar que el audio esté activado
         if (!audioReady) {
@@ -142,48 +142,27 @@ document.addEventListener('DOMContentLoaded', async function() {
             return; // Silenciosamente esperar a que cargue
         }
 
-        // Obtener cantidad de especies de esta región
-        const cantidadEspecies = ESPECIES_DATA[regionName] || 0;
-        
-        // Calcular tamaño de bandada proporcional a la cantidad de especies
-        // Escala: 737 especies (min) → 2 aves, 4473 especies (max) → 12 aves
-        const MIN_ESPECIES = 737;
-        const MAX_ESPECIES = 4473;
-        const MIN_AVES = 2;
-        const MAX_AVES = 12;
-        
-        // Normalizar y escalar
-        const normalized = Math.min(Math.max((cantidadEspecies - MIN_ESPECIES) / (MAX_ESPECIES - MIN_ESPECIES), 0), 1);
-        const flockSize = Math.floor(normalized * (MAX_AVES - MIN_AVES) + MIN_AVES);
-        
-        console.log(`🐦 Reproduciendo bandada de ${flockSize} aves: ${REGIONES_AVES[regionName]} (${cantidadEspecies} especies)`);
+        console.log(`🐦 Reproduciendo bandada: ${REGIONES_AVES[regionName]}`);
         stopAllBirds();
 
-        // Crear bandada con diferentes posiciones y tiempos de inicio
+        // Crear bandada (3-5 aves)
+        const flockSize = 3 + Math.floor(Math.random() * 3);
+        
         for (let i = 0; i < flockSize; i++) {
             const bird = new Tone.Player(player.buffer);
-            
-            // Posición espacial (panning de -1 a 1)
             const panner = new Tone.Panner((Math.random() * 2) - 1);
-            
-            // Volumen variable para simular distancia
-            const volume = new Tone.Volume(-6 + Math.random() * -10);
+            const volume = new Tone.Volume(-8 + Math.random() * -8);
             
             bird.chain(panner, volume, Tone.Destination);
             bird.loop = true;
-            
-            // Variación en velocidad de reproducción para naturalidad
             bird.playbackRate = 0.85 + Math.random() * 0.3;
 
-            // Tiempo de inicio escalonado (hasta 2 segundos)
-            const startDelay = Math.random() * 2000;
-            
             setTimeout(() => {
                 if (currentRegion === regionName) {
                     bird.start();
                     activePlayers.push(bird);
                 }
-            }, startDelay);
+            }, Math.random() * 1000);
         }
     }
 
