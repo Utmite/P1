@@ -32,3 +32,7 @@ Visualización interactiva minimalista de las aves representativas de cada regi�
 ## 🌐 Página
 
 [🔗 Ver sitio publicado en GitHub Pages](https://utmite.github.io/P1/)
+
+## Citas
+
+Microsoft. (2025). Copilot (GPT-5mini) [Large language model]. https://copilot.microsoft.com/
