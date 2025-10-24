@@ -1,191 +1,356 @@
-// Configuración del mapa de distribución de fauna de Chile
+// Aves de Chile - Mapa Interactivo Simplificado
 document.addEventListener('DOMContentLoaded', async function() {
-    // Coordenadas centrales de Chile
-    const PREFIX = "/P1"
-    const CHILE_CENTER = [-71.2, -39.5];
-    const CHILE_ZOOM = 2.8;
+    // Mapeo de regiones a aves - con nombres exactos del GeoJSON
+    const REGIONES_AVES = {
+        'Región de Arica y Parinacota': 'Flamenco Chileno',
+        'Región de Tarapacá': 'Parina Grande',
+        'Región de Antofagasta': 'Pilpilén',
+        'Región de Atacama': 'Cóndor Andino',
+        'Región de Coquimbo': 'Loica',
+        'Región de Valparaíso': 'Diuca',
+        'Región Metropolitana de Santiago': 'Chincol',
+        "Región del Libertador Bernardo O'Higgins": 'Queltehue',
+        'Región del Maule': 'Bandurria',
+        'Región de Ñuble': 'Traro',
+        'Región del Bío-Bío': 'Chucao',
+        'Región de La Araucanía': 'Rayadito',
+        'Región de Los Ríos': 'Huet-huet',
+        'Región de Los Lagos': 'Martín Pescador',
+        'Región de Aysén del Gral.Ibañez del Campo': 'Carpintero Negro',
+        'Región de Magallanes y Antártica Chilena': 'Pingüino de Magallanes'
+    };
+
+    // Mapeo de nombres de aves a nombres de archivo
+    const AVE_TO_FILE = {
+        'Flamenco Chileno': 'flamenco_chileno.mp3',
+        'Parina Grande': 'parina_grande.mp3',
+        'Pilpilén': 'pilpilen.mp3',
+        'Cóndor Andino': 'condor_andino.mp3',
+        'Loica': 'loica.mp3',
+        'Diuca': 'diuca.mp3',
+        'Chincol': 'chincol.mp3',
+        'Queltehue': 'queltehue.mp3',
+        'Bandurria': 'bandurria.mp3',
+        'Traro': 'traro.mp3',
+        'Chucao': 'chucao.mp3',
+        'Rayadito': 'rayadito.mp3',
+        'Huet-huet': 'huet_huet.mp3',
+        'Martín Pescador': 'martin_pescador.mp3',
+        'Carpintero Negro': 'carpintero_negro.mp3',
+        'Pingüino de Magallanes': 'pinguino_magallanes.mp3'
+    };
+
+    // Datos de porcentajes
+    let PORCENTAJES_DATA = {};
     
-    // Límites geográficos de Chile continental (sin Isla de Pascua)
-    const CHILE_BOUNDS = [
-        [-76.0, -56.0], // Suroeste (costa continental)
-        [-66.5, -17.5]   // Noreste
-    ];
+    // Estado
+    let currentRegion = null;
+    let audioPlayers = {};
+    let activePlayers = [];
+    let audioReady = false;
 
-    // Importar datos de fauna desde el JSON
-    let FAUNA_DATA;
+    // Cargar datos de especies
     try {
-        const response = await fetch(PREFIX + '/data/especies_xd.json');
-        FAUNA_DATA = await response.json();
-        console.log('Datos de fauna cargados:', FAUNA_DATA);
+        const response = await fetch('data/especies_xd.json');
+        const data = await response.json();
+        
+        // Crear mapa de región -> porcentaje
+        Object.keys(data.Region).forEach(key => {
+            const region = data.Region[key];
+            const porcentaje = data.porcentaje_especies[key];
+            PORCENTAJES_DATA[region] = porcentaje.toFixed(1);
+        });
+        console.log('✓ Porcentajes cargados');
     } catch (error) {
-        console.error('Error al cargar datos de fauna:', error);
-        return;
+        console.error('❌ Error cargando porcentajes:', error);
     }
 
-    // Función para calcular color basado en porcentaje
-    function getColorByPercentage(percentage) {
-        // Normalizar porcentaje con mejor distribución (max es ~12.3%)
-        const normalized = Math.min(percentage / 12.5, 1);
-        
-        // Gradiente verde mejorado con más contraste entre tonos
-        const colors = [
-            '#f0fdf4', // Verde muy muy claro (0-1%)
-            '#dcfce7', // Verde muy claro (1-3%)
-            '#bbf7d0', // Verde claro (3-5%)
-            '#86efac', // Verde medio claro (5-7%)
-            '#4ade80', // Verde medio (7-9%)
-            '#22c55e', // Verde (9-11%)
-            '#16a34a', // Verde oscuro (11-13%)
-            '#15803d'  // Verde muy oscuro (13%+)
-        ];
-        
-        // Seleccionar color con mejor distribución
-        const colorIndex = Math.floor(normalized * (colors.length - 1));
-        return colors[Math.min(colorIndex, colors.length - 1)];
+    // Inicializar Tone.js (requiere interacción del usuario)
+    async function initAudio() {
+        if (!audioReady) {
+            await Tone.start();
+            audioReady = true;
+            console.log('🔊 Audio activado');
+        }
     }
-
-    // Inicializar el mapa
-    const map = new maplibregl.Map({
-        container: 'map',
-        style: PREFIX +'/mapas/style.json',
-        center: CHILE_CENTER,
-        zoom: CHILE_ZOOM,
-        minZoom: 1.5,
-        maxZoom: 12,
-        attributionControl: false,
-        interactive: false,
-        pitch: 0,
-        bearing: 0,
-        antialias: true
+    
+    // Manejar popup de activación de audio
+    const audioPopup = document.getElementById('audio-popup');
+    const activateButton = document.getElementById('activate-audio');
+    
+    activateButton.addEventListener('click', async () => {
+        await initAudio();
+        audioPopup.classList.add('hidden');
+        console.log('✅ Audio activado por el usuario');
     });
 
-    // Deshabilitar todos los controles de navegación
-    map.boxZoom.disable();
+    // Precargar audio
+    async function preloadAudio() {
+        console.log('🎵 Cargando audios...');
+        const loadPromises = [];
+        
+        for (const [region, ave] of Object.entries(REGIONES_AVES)) {
+            const filename = AVE_TO_FILE[ave];
+            
+            if (!filename) {
+                console.warn(`  ⚠️  No hay mapeo de archivo para: ${ave}`);
+                continue;
+            }
+            
+            const loadPromise = new Promise((resolve, reject) => {
+                const player = new Tone.Player({
+                    url: `sounds/${filename}`,
+                    onload: () => {
+                        console.log(`  ✓ ${ave} → ${filename}`);
+                        resolve();
+                    },
+                    onerror: (error) => {
+                        console.warn(`  ❌ ${ave}: ${error}`);
+                        reject(error);
+                    }
+                }).toDestination();
+                
+                audioPlayers[region] = player;
+            });
+            
+            loadPromises.push(loadPromise.catch(err => console.warn('Error cargando:', err)));
+        }
+        
+        // Esperar a que todos los audios se carguen
+        await Promise.all(loadPromises);
+        console.log('✓ Audios precargados y listos');
+    }
+
+    // Reproducir bandada
+    function playBirdFlock(regionName) {
+        // Verificar que el audio esté activado
+        if (!audioReady) {
+            return;
+        }
+
+        const player = audioPlayers[regionName];
+        if (!player) {
+            console.warn(`❌ No hay player para: ${regionName}`);
+            return;
+        }
+        if (!player.loaded) {
+            return; // Silenciosamente esperar a que cargue
+        }
+
+        console.log(`🐦 Reproduciendo bandada: ${REGIONES_AVES[regionName]}`);
+        stopAllBirds();
+
+        // Crear bandada (3-5 aves)
+        const flockSize = 3 + Math.floor(Math.random() * 3);
+        
+        for (let i = 0; i < flockSize; i++) {
+            const bird = new Tone.Player(player.buffer);
+            const panner = new Tone.Panner((Math.random() * 2) - 1);
+            const volume = new Tone.Volume(-8 + Math.random() * -8);
+            
+            bird.chain(panner, volume, Tone.Destination);
+            bird.loop = true;
+            bird.playbackRate = 0.85 + Math.random() * 0.3;
+
+            setTimeout(() => {
+                if (currentRegion === regionName) {
+                    bird.start();
+                    activePlayers.push(bird);
+                }
+            }, Math.random() * 1000);
+        }
+    }
+
+    // Detener sonidos
+    function stopAllBirds() {
+        activePlayers.forEach(p => {
+            if (p.state === 'started') p.stop();
+            p.dispose();
+        });
+        activePlayers = [];
+    }
+
+    // Actualizar info
+    function updateInfo(regionName, show = true) {
+        const infoBox = document.getElementById('region-info');
+        const birdNameEl = infoBox.querySelector('.bird-name');
+        const regionNameEl = infoBox.querySelector('.region-name');
+        
+        if (show && REGIONES_AVES[regionName]) {
+            const ave = REGIONES_AVES[regionName];
+            // El nombre de la región ya viene completo del GeoJSON
+            const porcentaje = PORCENTAJES_DATA[regionName] || '?';
+            
+            birdNameEl.textContent = `Ave Característica: ${ave}`;
+            regionNameEl.textContent = `${regionName} • ${porcentaje}% de las especies de Chile`;
+            infoBox.classList.remove('hidden');
+        } else {
+            infoBox.classList.add('hidden');
+        }
+    }
+
+    // Inicializar mapa
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: 'mapas/style.json',
+        center: [0, 0],  // Centro temporal, se ajustará con fitBounds
+        zoom: 1,  // Zoom temporal, se ajustará con fitBounds
+        bearing: 90,  // Rotar 90 grados para orientación horizontal
+        interactive: true,  // ¡IMPORTANTE: true para hover!
+        attributionControl: false,
+        antialias: true
+    });
+    
+    // Deshabilitar navegación pero mantener hover
     map.scrollZoom.disable();
-    map.dragPan.disable();
+    map.boxZoom.disable();
     map.dragRotate.disable();
+    map.dragPan.disable();
     map.keyboard.disable();
     map.doubleClickZoom.disable();
     map.touchZoomRotate.disable();
 
-    // Ajustar inmediatamente para mostrar todo Chile
-    map.fitBounds(CHILE_BOUNDS, {
-        padding: { top: 30, bottom: 30, left: 30, right: 30 },
-        maxZoom: 3.5
-    });
-
-    // Función para cargar cuando el mapa esté listo
-    map.on('load', function() {
-        console.log('Mapa base cargado');
-        cargarVisualizacion();
-    });
-
-    // Función para cargar las regiones con visualización de datos
-    async function cargarVisualizacion() {
-        try {
-            // Cargar el archivo combinado de todas las regiones
-            const response = await fetch(PREFIX+'/mapas/regiones_combinadas.geojson');
-            if (!response.ok) {
-                throw new Error('Error al cargar regiones_combinadas.geojson');
+    map.on('load', async () => {
+        console.log('🗺️  Mapa cargado');
+        await preloadAudio();
+        
+        const response = await fetch('mapas/regiones_combinadas.geojson');
+        const regiones = await response.json();
+        
+        // Asignar IDs y porcentajes a las features
+        regiones.features.forEach((feature, index) => {
+            if (!feature.id) {
+                feature.id = index;
+            }
+            // Agregar porcentaje de especies como propiedad
+            const regionName = feature.properties.name || feature.properties.NAME || feature.properties.Region;
+            const porcentaje = parseFloat(PORCENTAJES_DATA[regionName]) || 0;
+            feature.properties.porcentaje = porcentaje;
+        });
+        
+        console.log('✓ Regiones cargadas:', regiones.features.length);
+        
+        // Calcular los límites usando solo Arica y Magallanes para centrado óptimo
+        const bounds = new maplibregl.LngLatBounds();
+        const regionesParaBounds = ['Región de Arica y Parinacota', 'Región de Magallanes y Antártica Chilena'];
+        
+        regiones.features.forEach(feature => {
+            const regionName = feature.properties.name || feature.properties.NAME || feature.properties.Region;
+            
+            // Solo usar Arica y Magallanes para calcular bounds
+            if (!regionesParaBounds.includes(regionName)) {
+                return;
             }
             
-            const regionesData = await response.json();
-            
-            // Procesar cada feature (región) del GeoJSON
-            regionesData.features.forEach((feature, index) => {
-                // Obtener el nombre de la región desde las propiedades del feature
-                const regionName = feature.properties.name || feature.properties.NAME || feature.properties.Region;
-                
-                // Buscar la región en nuestros datos
-                let regionIndex = null;
-                for (const [dataIndex, dataRegion] of Object.entries(FAUNA_DATA.Region)) {
-                    if (dataRegion === regionName || dataRegion.includes(regionName) || regionName.includes(dataRegion)) {
-                        regionIndex = dataIndex;
-                        break;
-                    }
-                }
-                
-                if (!regionIndex || FAUNA_DATA.Region[regionIndex] === "Zona sin demarcar") {
-                    return; // Skip si no encontramos la región o es zona sin demarcar
-                }
-                
-                const percentage = FAUNA_DATA.porcentaje_especies[regionIndex];
-                const color = getColorByPercentage(percentage);
-
-                // Crear un GeoJSON individual para cada región
-                const singleRegionGeoJSON = {
-                    type: "FeatureCollection",
-                    features: [feature]
-                };
-
-                // Agregar fuente de datos para esta región
-                map.addSource(`fauna-${index}`, {
-                    type: 'geojson',
-                    data: singleRegionGeoJSON
+            if (feature.geometry.type === 'Polygon') {
+                feature.geometry.coordinates[0].forEach(coord => {
+                    bounds.extend(coord);
                 });
-
-                // Agregar capa de relleno con color basado en porcentaje
-                map.addLayer({
-                    id: `fauna-fill-${index}`,
-                    type: 'fill',
-                    source: `fauna-${index}`,
-                    paint: {
-                        'fill-color': color,
-                        'fill-opacity': 0.8
-                    }
+            } else if (feature.geometry.type === 'MultiPolygon') {
+                feature.geometry.coordinates.forEach(polygon => {
+                    polygon[0].forEach(coord => {
+                        bounds.extend(coord);
+                    });
                 });
-
-                // Agregar capa de borde
-                map.addLayer({
-                    id: `fauna-line-${index}`,
-                    type: 'line',
-                    source: `fauna-${index}`,
-                    paint: {
-                        'line-color': '#16a34a',
-                        'line-width': 1.5,
-                        'line-opacity': 0.9
-                    }
-                });
-            });
-
-            console.log('Visualización de fauna cargada correctamente desde regiones_combinadas.geojson');
-        } catch (error) {
-            console.error('Error al cargar la visualización:', error);
-        }
-    }
-
-    map.on('error', function(e) {
-        console.error('Error en el mapa:', e);
-    });
-
-    // Hacer el mapa disponible globalmente
-    window.chileMap = map;
-
-    // Función para aplicar colores a las cards basado en porcentaje
-    function styleRegionCards() {
-        const cards = document.querySelectorAll('.region-stat[data-percentage]');
-        cards.forEach(card => {
-            const percentage = parseFloat(card.getAttribute('data-percentage'));
-            const color = getColorByPercentage(percentage);
-            
-            // Convertir hex a RGB para poder usar transparencia
-            const hex = color.replace('#', '');
-            const r = parseInt(hex.substring(0, 2), 16);
-            const g = parseInt(hex.substring(2, 4), 16);
-            const b = parseInt(hex.substring(4, 6), 16);
-            
-            // Aplicar gradiente más sólido para mejor contraste
-            card.style.setProperty('background', `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.4), rgba(${r}, ${g}, ${b}, 0.8))`, 'important');
-            card.style.setProperty('border-color', color, 'important');
-            
-            // Color de texto más oscuro para mejor contraste
-            const percentageElement = card.querySelector('.region-percentage');
-            if (percentageElement) {
-                percentageElement.style.color = '#065f46'; // Verde muy oscuro
             }
         });
-    }
+        
+        // Ajustar el mapa a los límites centrado y a tamaño completo
+        // Con bearing: 90 (mapa horizontal), los ejes se intercambian:
+        // - top/bottom padding afecta centrado en X
+        // - left/right padding afecta centrado en Y
+        map.fitBounds(bounds, {
+            padding: {
+                top: 80,     // Espacio para título y subtítulo
+                bottom: 80,  // Espacio para info box
+                left: 100,   // Margen izquierdo
+                right: 100   // Margen derecho
+            },
+            bearing: 90,  // Mantener la rotación horizontal
+            duration: 0,  // Sin animación
+        });
 
-    // Aplicar estilos a las cards
-    styleRegionCards();
+        map.addSource('regiones', {
+            type: 'geojson',
+            data: regiones,
+            generateId: true  // Generar IDs automáticamente
+        });
+
+        // Colorear regiones según porcentaje de especies
+        // Solo la región con más especies (Valparaíso) es roja
+        // Solo la región con menos especies (Tarapacá) es azul
+        // El resto permanece gris
+        map.addLayer({
+            id: 'regiones-fill',
+            type: 'fill',
+            source: 'regiones',
+            paint: {
+                'fill-color': [
+                    'case',
+                    ['>', ['get', 'porcentaje'], 12],  // Valparaíso (~12.28%)
+                    '#c75a5a',  // Rojo suave
+                    ['<', ['get', 'porcentaje'], 2.5],  // Tarapacá (~2.02%)
+                    '#5a8db8',  // Azul suave
+                    '#c0c0c0'   // Gris para todas las demás
+                ],
+                'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.9, 0.7]
+            }
+        });
+
+        map.addLayer({
+            id: 'regiones-line',
+            type: 'line',
+            source: 'regiones',
+            paint: {
+                'line-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#4a4a4a', '#707070'],
+                'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 3, 1.2]
+            }
+        });
+
+        let hoveredId = null;
+
+        map.on('mousemove', 'regiones-fill', (e) => {
+            if (e.features.length > 0) {
+                const feature = e.features[0];
+                
+                if (hoveredId !== null) {
+                    map.setFeatureState({ source: 'regiones', id: hoveredId }, { hover: false });
+                }
+
+                hoveredId = feature.id;
+                const regionName = feature.properties.name || feature.properties.NAME || feature.properties.Region;
+
+                if (hoveredId !== undefined && hoveredId !== null) {
+                    map.setFeatureState({ source: 'regiones', id: hoveredId }, { hover: true });
+                }
+
+                if (currentRegion !== regionName) {
+                    if (REGIONES_AVES[regionName]) {
+                        currentRegion = regionName;
+                        updateInfo(regionName, true);
+                        playBirdFlock(regionName);
+                    }
+                }
+
+                map.getCanvas().style.cursor = 'pointer';
+            }
+        });
+
+        map.on('mouseleave', 'regiones-fill', () => {
+            if (hoveredId !== null && hoveredId !== undefined) {
+                map.setFeatureState({ source: 'regiones', id: hoveredId }, { hover: false });
+            }
+            hoveredId = null;
+            currentRegion = null;
+            updateInfo(null, false);
+            stopAllBirds();
+            map.getCanvas().style.cursor = '';
+        });
+
+        console.log('✅ TODO LISTO');
+        console.log('💡 HAZ CLIC en la página para activar audio');
+        console.log('🖱️  Luego pasa el cursor sobre las regiones');
+    });
+
+    window.chileMap = map;
 });

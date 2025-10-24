@@ -19,25 +19,6 @@
       "maxzoom": 24
     },
     {
-      "id": "ocean",
-      "type": "fill",
-      "paint": {
-        "fill-color": "#e0f2fe",
-        "fill-opacity": 0.6
-      },
-      "filter": [
-        "all",
-        ["==", ["geometry-type"], "Polygon"],
-        ["==", ["get", "class"], "ocean"]
-      ],
-      "layout": {
-        "visibility": "visible"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "source-layer": "water"
-    },
-    {
       "id": "countries-boundary-other",
       "type": "line",
       "paint": {
