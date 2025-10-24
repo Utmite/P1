@@ -78,7 +78,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Manejar popup de activación de audio
+    // Manejar popups
+    const loadingPopup = document.getElementById('loading-popup');
     const audioPopup = document.getElementById('audio-popup');
     const activateButton = document.getElementById('activate-audio');
     
@@ -216,6 +217,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     map.on('load', async () => {
         console.log('🗺️  Mapa cargado');
+        
+        // Mostrar loading popup mientras carga el GeoJSON
+        loadingPopup.classList.remove('hidden');
+        
         await preloadAudio();
         
         const response = await fetch('mapas/regiones_combinadas.geojson');
@@ -281,6 +286,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             data: regiones,
             generateId: true  // Generar IDs automáticamente
         });
+        
+        // Ocultar loading popup después de cargar el GeoJSON
+        loadingPopup.classList.add('hidden');
 
         // Colorear regiones según cantidad de especies
         // Solo la región con más especies (Valparaíso: 4473) es roja
@@ -358,6 +366,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('✅ TODO LISTO');
         console.log('💡 HAZ CLIC en la página para activar audio');
         console.log('🖱️  Luego pasa el cursor sobre las regiones');
+        
+        // Mostrar audio popup
+        audioPopup.classList.remove('hidden');
     });
 
     window.chileMap = map;
