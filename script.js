@@ -40,8 +40,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         'Pingüino de Magallanes': 'pinguino_magallanes.mp3'
     };
 
-    // Datos de porcentajes
-    let PORCENTAJES_DATA = {};
+    // Datos de especies
+    let ESPECIES_DATA = {};
+    let TOTAL_NACIONAL = 0;
     
     // Estado
     let currentRegion = null;
@@ -54,15 +55,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         const response = await fetch('data/especies_xd.json');
         const data = await response.json();
         
-        // Crear mapa de región -> porcentaje
+        // Calcular total nacional (máximo de especies entre todas las regiones)
+        TOTAL_NACIONAL = Math.max(...Object.values(data.cantidad_especies_unicas));
+        
+        // Crear mapa de región -> cantidad de especies
         Object.keys(data.Region).forEach(key => {
             const region = data.Region[key];
-            const porcentaje = data.porcentaje_especies[key];
-            PORCENTAJES_DATA[region] = porcentaje.toFixed(1);
+            const cantidad = data.cantidad_especies_unicas[key];
+            ESPECIES_DATA[region] = cantidad;
         });
-        console.log('✓ Porcentajes cargados');
+        console.log('✓ Datos de especies cargados - Total nacional:', TOTAL_NACIONAL);
     } catch (error) {
-        console.error('❌ Error cargando porcentajes:', error);
+        console.error('❌ Error cargando datos:', error);
     }
 
     // Inicializar Tone.js (requiere interacción del usuario)
@@ -179,10 +183,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (show && REGIONES_AVES[regionName]) {
             const ave = REGIONES_AVES[regionName];
             // El nombre de la región ya viene completo del GeoJSON
-            const porcentaje = PORCENTAJES_DATA[regionName] || '?';
+            const cantidad = ESPECIES_DATA[regionName] || '?';
             
             birdNameEl.textContent = `Ave Característica: ${ave}`;
-            regionNameEl.textContent = `${regionName} • ${porcentaje}% de las especies de Chile`;
+            regionNameEl.textContent = `${regionName} • ${cantidad} de ${TOTAL_NACIONAL} especies nacionales`;
             infoBox.classList.remove('hidden');
         } else {
             infoBox.classList.add('hidden');
@@ -217,15 +221,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         const response = await fetch('mapas/regiones_combinadas.geojson');
         const regiones = await response.json();
         
-        // Asignar IDs y porcentajes a las features
+        // Asignar IDs y cantidad de especies a las features
         regiones.features.forEach((feature, index) => {
             if (!feature.id) {
                 feature.id = index;
             }
-            // Agregar porcentaje de especies como propiedad
+            // Agregar cantidad de especies como propiedad
             const regionName = feature.properties.name || feature.properties.NAME || feature.properties.Region;
-            const porcentaje = parseFloat(PORCENTAJES_DATA[regionName]) || 0;
-            feature.properties.porcentaje = porcentaje;
+            const cantidad = ESPECIES_DATA[regionName] || 0;
+            feature.properties.cantidad = cantidad;
+            // Calcular porcentaje para colorear
+            feature.properties.porcentaje = (cantidad / TOTAL_NACIONAL) * 100;
         });
         
         console.log('✓ Regiones cargadas:', regiones.features.length);
@@ -276,9 +282,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             generateId: true  // Generar IDs automáticamente
         });
 
-        // Colorear regiones según porcentaje de especies
-        // Solo la región con más especies (Valparaíso) es roja
-        // Solo la región con menos especies (Tarapacá) es azul
+        // Colorear regiones según cantidad de especies
+        // Solo la región con más especies (Valparaíso: 4473) es roja
+        // Solo la región con menos especies (Tarapacá: 737) es azul
         // El resto permanece gris
         map.addLayer({
             id: 'regiones-fill',
@@ -287,9 +293,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             paint: {
                 'fill-color': [
                     'case',
-                    ['>', ['get', 'porcentaje'], 12],  // Valparaíso (~12.28%)
+                    ['>=', ['get', 'cantidad'], 4473],  // Valparaíso (máximo)
                     '#c75a5a',  // Rojo suave
-                    ['<', ['get', 'porcentaje'], 2.5],  // Tarapacá (~2.02%)
+                    ['<=', ['get', 'cantidad'], 737],  // Tarapacá (mínimo)
                     '#5a8db8',  // Azul suave
                     '#c0c0c0'   // Gris para todas las demás
                 ],
@@ -297,13 +303,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
 
+        // Agregar líneas de frontera entre regiones (solo sutiles bordes internos)
         map.addLayer({
             id: 'regiones-line',
             type: 'line',
             source: 'regiones',
             paint: {
-                'line-color': ['case', ['boolean', ['feature-state', 'hover'], false], '#4a4a4a', '#707070'],
-                'line-width': ['case', ['boolean', ['feature-state', 'hover'], false], 3, 1.2]
+                'line-color': '#ffffff',
+                'line-width': 1,
+                'line-opacity': 0.3
             }
         });
 

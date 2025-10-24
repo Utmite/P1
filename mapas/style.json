@@ -17,27 +17,6 @@
         "visibility": "visible"
       },
       "maxzoom": 24
-    },
-    {
-      "id": "countries-boundary-other",
-      "type": "line",
-      "paint": {
-        "line-color": "#cbd5e1",
-        "line-width": 1,
-        "line-opacity": 0.3
-      },
-      "filter": [
-        "all",
-        ["!=", ["get", "ADM0_A3"], "CHL"]
-      ],
-      "layout": {
-        "line-cap": "round",
-        "line-join": "round",
-        "visibility": "visible"
-      },
-      "source": "maplibre",
-      "maxzoom": 24,
-      "source-layer": "countries"
     }
   ],
   "bearing": 0,

@@ -150,7 +150,7 @@ body {
 /* Región info tooltip */
 .region-info {
   position: absolute;
-  bottom: 40px;
+  top: 120px;
   right: 40px;
   background: rgba(255, 255, 255, 0.97);
   padding: 35px 45px;
@@ -186,6 +186,53 @@ body {
   line-height: 1.4;
 }
 
+/* Leyenda de colores */
+.legend {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 20px 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(200, 200, 200, 0.3);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.legend-color.red {
+  background-color: #c75a5a;
+}
+
+.legend-color.blue {
+  background-color: #5a8db8;
+}
+
+.legend-text {
+  font-size: 0.95rem;
+  color: #4a4a4a;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .title {
@@ -202,7 +249,7 @@ body {
   
   .region-info {
     padding: 18px 25px;
-    bottom: 20px;
+    top: 80px;
     right: 20px;
     max-width: calc(100vw - 40px);
   }
@@ -213,5 +260,20 @@ body {
   
   .region-name {
     font-size: 0.8rem;
+  }
+  
+  .legend {
+    padding: 15px 20px;
+    bottom: 20px;
+    left: 20px;
+  }
+  
+  .legend-text {
+    font-size: 0.85rem;
+  }
+  
+  .legend-color {
+    width: 20px;
+    height: 20px;
   }
 }
