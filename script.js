@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const data = await response.json();
         
         // Calcular total nacional (máximo de especies entre todas las regiones)
-        TOTAL_NACIONAL = Math.max(...Object.values(data.cantidad_especies_unicas));
+        TOTAL_NACIONAL = 14506;
         
         // Crear mapa de región -> cantidad de especies
         Object.keys(data.Region).forEach(key => {
