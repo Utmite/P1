@@ -35,4 +35,6 @@ Visualización interactiva minimalista de las aves representativas de cada regi�
 
 ## Citas
 
-Microsoft. (2025). Copilot (GPT-5mini) [Large language model]. https://copilot.microsoft.com/
+El código fue desarrollado con la asistencia de Microsoft Copilot (GPT-5 mini; Microsoft, 2025).
+
+Microsoft. (2025). Copilot (GPT-5 mini) [Large language model]. https://copilot.microsoft.com/
