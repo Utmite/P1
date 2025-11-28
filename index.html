@@ -3,58 +3,553 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aves de Chile - Mapa Interactivo</title>
-    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <link
-      href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
-      rel="stylesheet"
-    />
+    <title>Aves de Chile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <link rel="stylesheet" href="styles.css" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #111;
+        min-height: 100vh;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 300;
+        margin-bottom: 20px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: #888;
+      }
+
+      /* Popup inicial */
+      #start-popup {
+        position: fixed;
+        inset: 0;
+        background: #111;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      #start-popup.hidden {
+        display: none;
+      }
+
+      #start-popup h2 {
+        font-size: 2rem;
+        font-weight: 300;
+        margin-bottom: 30px;
+        letter-spacing: 3px;
+      }
+
+      #start-btn {
+        background: #fff;
+        color: #111;
+        border: none;
+        padding: 15px 40px;
+        font-size: 1rem;
+        cursor: pointer;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transition: all 0.2s;
+      }
+      #start-btn:hover {
+        background: #ddd;
+      }
+
+      /* Cámara oculta */
+      #camera-section {
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+      #video,
+      #canvas {
+        width: 640px;
+        height: 480px;
+      }
+
+      /* Indicador de zona */
+      .zone-bar {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+      .zone-lbl {
+        padding: 15px 30px;
+        font-size: 0.9rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        opacity: 0.3;
+        transition: all 0.3s;
+        border-radius: 4px;
+      }
+      .zone-lbl.active {
+        opacity: 1;
+        font-weight: 600;
+      }
+      .zone-lbl.norte {
+        color: #ff8a65;
+      }
+      .zone-lbl.norte.active {
+        background: rgba(255, 120, 80, 0.2);
+      }
+      .zone-lbl.centro {
+        color: #81c784;
+      }
+      .zone-lbl.centro.active {
+        background: rgba(100, 200, 100, 0.2);
+      }
+      .zone-lbl.sur {
+        color: #64b5f6;
+      }
+      .zone-lbl.sur.active {
+        background: rgba(80, 150, 255, 0.2);
+      }
+
+      /* Galería de aves */
+      #gallery {
+        width: 100%;
+        max-width: 900px;
+        margin-top: 30px;
+        display: none;
+      }
+
+      #zone-name {
+        font-size: 1rem;
+        font-weight: 400;
+        text-align: center;
+        margin-bottom: 20px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+      #zone-name.norte {
+        color: #ff8a65;
+      }
+      #zone-name.centro {
+        color: #81c784;
+      }
+      #zone-name.sur {
+        color: #64b5f6;
+      }
+
+      #birds {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 25px;
+      }
+
+      .bird {
+        text-align: center;
+        transition: transform 0.2s;
+        opacity: 0.4;
+      }
+      .bird.playing {
+        transform: scale(1.15);
+        opacity: 1;
+      }
+
+      .bird img {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #333;
+        transition: all 0.2s;
+      }
+      .bird.playing img {
+        border-color: #ffd700;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      }
+      .bird.norte img {
+        border-color: #ff8a65;
+      }
+      .bird.centro img {
+        border-color: #81c784;
+      }
+      .bird.sur img {
+        border-color: #64b5f6;
+      }
+
+      .bird span {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.75rem;
+        color: #999;
+      }
+
+      /* Estado */
+      #status {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        color: #666;
+        display: none;
+      }
+    </style>
   </head>
   <body>
-    <div id="loading-popup" class="loading-popup">
-      <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <h2>Cargando Assets</h2>
-        <p>Preparando el mapa y los sonidos de las aves...</p>
-      </div>
+    <div id="start-popup">
+      <h2>AVES DE CHILE</h2>
+      <p
+        style="
+          color: #666;
+          margin-bottom: 30px;
+          text-align: center;
+          line-height: 1.8;
+        "
+      >
+        Mueve tu mano para explorar<br />
+        Izquierda = Norte · Centro · Derecha = Sur
+      </p>
+      <button id="start-btn">Iniciar Cámara</button>
     </div>
 
-    <div id="audio-popup" class="audio-popup hidden">
-      <div class="popup-content">
-        <h2>🐦 Aves de Chile</h2>
-        <p>
-          Explora el mapa interactivo y escucha los sonidos de las aves de cada
-          región
-        </p>
-        <button id="activate-audio" class="activate-button">
-          Activar Audio
-        </button>
-      </div>
+    <h1>Aves de Chile</h1>
+
+    <div class="zone-bar">
+      <div class="zone-lbl norte" id="lbl-norte">Norte</div>
+      <div class="zone-lbl centro" id="lbl-centro">Centro</div>
+      <div class="zone-lbl sur" id="lbl-sur">Sur</div>
     </div>
 
-    <div class="container">
-      <div class="title">Aves de Chile</div>
-      <div class="subtitle">
-        Pasa el cursor sobre una región para escuchar su ave característica
-      </div>
-      <div id="map"></div>
-      <div id="region-info" class="region-info hidden">
-        <div class="bird-name"></div>
-        <div class="region-name"></div>
-      </div>
-      <div class="legend">
-        <div class="legend-item">
-          <span class="legend-color red"></span>
-          <span class="legend-text">Mayor cantidad de especies</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-color blue"></span>
-          <span class="legend-text">Menor cantidad de especies</span>
-        </div>
-      </div>
+    <!-- Cámara oculta para detección -->
+    <div id="camera-section">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
     </div>
-    <script src="script.js"></script>
+
+    <div id="gallery">
+      <div id="zone-name">Selecciona una zona</div>
+      <div id="birds"></div>
+    </div>
+
+    <div id="status">Muestra tu mano</div>
+
+    <script>
+      const AVES = {
+        norte: {
+          nombre: "Norte",
+          aves: [
+            {
+              nombre: "Flamenco Chileno",
+              archivo: "flamenco_chileno",
+              img: "flamenco_chileno.jpg",
+            },
+            {
+              nombre: "Parina Grande",
+              archivo: "parina_grande",
+              img: "parina_grande.jpg",
+            },
+            { nombre: "Pilpilén", archivo: "pilpilen", img: "pilpilen.jpg" },
+            {
+              nombre: "Cóndor Andino",
+              archivo: "condor_andino",
+              img: "condor_andino.jpg",
+            },
+          ],
+        },
+        centro: {
+          nombre: "Centro",
+          aves: [
+            { nombre: "Loica", archivo: "loica", img: "loica.jpg" },
+            { nombre: "Diuca", archivo: "diuca", img: "diuca.jpg" },
+            { nombre: "Chincol", archivo: "chincol", img: "chincol.webp" },
+            { nombre: "Queltehue", archivo: "queltehue", img: "queltehue.jpg" },
+            { nombre: "Bandurria", archivo: "bandurria", img: "bandurria.jpg" },
+            { nombre: "Traro", archivo: "traro", img: "traro.jpg" },
+          ],
+        },
+        sur: {
+          nombre: "Sur",
+          aves: [
+            { nombre: "Chucao", archivo: "chucao", img: "chucao.jpg" },
+            { nombre: "Rayadito", archivo: "rayadito", img: "rayadito.jpg" },
+            { nombre: "Huet-huet", archivo: "huet_huet", img: "huet_huet.jpg" },
+            {
+              nombre: "Martín Pescador",
+              archivo: "martin_pescador",
+              img: "martin_pescador.jpg",
+            },
+            {
+              nombre: "Carpintero Negro",
+              archivo: "carpintero_negro",
+              img: "carpintero_negro.jpg",
+            },
+            {
+              nombre: "Pingüino",
+              archivo: "pinguino_magallanes",
+              img: "pinguino_magallanes.jpg",
+            },
+          ],
+        },
+      };
+
+      let currentZone = null;
+      let players = {};
+      let active = [];
+      let audioOk = false;
+      let hands, camera;
+      let processing = false;
+
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const gallery = document.getElementById("gallery");
+      const zoneName = document.getElementById("zone-name");
+      const birdsDiv = document.getElementById("birds");
+      const status = document.getElementById("status");
+      const startPopup = document.getElementById("start-popup");
+      const startBtn = document.getElementById("start-btn");
+      const lblNorte = document.getElementById("lbl-norte");
+      const lblCentro = document.getElementById("lbl-centro");
+      const lblSur = document.getElementById("lbl-sur");
+
+      // Cargar audios
+      async function loadAudio() {
+        for (const [z, data] of Object.entries(AVES)) {
+          for (const ave of data.aves) {
+            try {
+              const p = new Tone.Player(
+                `sounds/${ave.archivo}.mp3`
+              ).toDestination();
+              await new Promise((r) =>
+                p.loaded ? r() : (p.buffer.onload = r)
+              );
+              players[ave.archivo] = p;
+            } catch (e) {
+              console.warn(e);
+            }
+          }
+        }
+      }
+
+      let currentBird = null;
+      let birdIndex = 0;
+      let birdTimeout = null;
+      const BIRD_DURATION = 4000; // 4 segundos por ave
+
+      function stopAll() {
+        if (currentBird) {
+          try {
+            currentBird.stop();
+            currentBird.dispose();
+          } catch (e) {}
+          currentBird = null;
+        }
+        if (birdTimeout) {
+          clearTimeout(birdTimeout);
+          birdTimeout = null;
+        }
+        birdIndex = 0;
+        document
+          .querySelectorAll(".bird.playing")
+          .forEach((b) => b.classList.remove("playing"));
+      }
+
+      function playNextBird(zona) {
+        if (!audioOk || currentZone !== zona) return;
+
+        const aves = AVES[zona].aves;
+        if (birdIndex >= aves.length) {
+          birdIndex = 0; // Reiniciar ciclo
+        }
+
+        const ave = aves[birdIndex];
+        const p = players[ave.archivo];
+
+        // Detener ave anterior
+        if (currentBird) {
+          try {
+            currentBird.stop();
+            currentBird.dispose();
+          } catch (e) {}
+        }
+        document
+          .querySelectorAll(".bird.playing")
+          .forEach((b) => b.classList.remove("playing"));
+
+        if (!p) {
+          birdIndex++;
+          birdTimeout = setTimeout(() => playNextBird(zona), 100);
+          return;
+        }
+
+        // Reproducir nueva ave
+        currentBird = new Tone.Player(p.buffer);
+        currentBird.chain(new Tone.Volume(-5), Tone.Destination);
+        currentBird.loop = true;
+        currentBird.start();
+
+        // Marcar como activa
+        const el = document.querySelector(`.bird[data-id="${ave.archivo}"]`);
+        if (el) el.classList.add("playing");
+
+        // Programar siguiente ave
+        birdIndex++;
+        birdTimeout = setTimeout(() => playNextBird(zona), BIRD_DURATION);
+      }
+
+      function playZone(zona) {
+        if (!audioOk) return;
+        stopAll();
+        playNextBird(zona);
+      }
+
+      function showGallery(zona) {
+        const data = AVES[zona];
+        zoneName.textContent = data.nombre;
+        zoneName.className = zona;
+        birdsDiv.innerHTML = "";
+        data.aves.forEach((ave) => {
+          const div = document.createElement("div");
+          div.className = `bird ${zona}`;
+          div.dataset.id = ave.archivo;
+          div.innerHTML = `<img src="img/${ave.img}" alt="${ave.nombre}"><span>${ave.nombre}</span>`;
+          birdsDiv.appendChild(div);
+        });
+        gallery.style.display = "block";
+      }
+
+      function hideGallery() {
+        gallery.style.display = "none";
+      }
+
+      function setZone(zona) {
+        if (zona === currentZone) return;
+        stopAll(); // Siempre detener al cambiar
+        currentZone = zona;
+        birdIndex = 0; // Reiniciar índice
+        lblNorte.classList.toggle("active", zona === "norte");
+        lblCentro.classList.toggle("active", zona === "centro");
+        lblSur.classList.toggle("active", zona === "sur");
+        if (zona) {
+          showGallery(zona);
+          playZone(zona);
+        } else {
+          hideGallery();
+        }
+      }
+
+      function onResults(results) {
+        if (!canvas || video.videoWidth === 0) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(results.image, 0, 0);
+
+        // Líneas divisoras
+        const w = canvas.width / 3;
+        ctx.strokeStyle = "rgba(255,255,255,0.2)";
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(w, 0);
+        ctx.lineTo(w, canvas.height);
+        ctx.moveTo(w * 2, 0);
+        ctx.lineTo(w * 2, canvas.height);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (results.multiHandLandmarks?.length > 0) {
+          const lm = results.multiHandLandmarks[0];
+          const x = lm[8].x * canvas.width;
+          const zona = x < w ? "norte" : x < w * 2 ? "centro" : "sur";
+
+          // Dibujar mano
+          const col =
+            zona === "norte"
+              ? "#ff8a65"
+              : zona === "centro"
+              ? "#81c784"
+              : "#64b5f6";
+          ctx.fillStyle = col;
+          lm.forEach((p, i) => {
+            ctx.beginPath();
+            ctx.arc(
+              p.x * canvas.width,
+              p.y * canvas.height,
+              i === 8 ? 10 : 5,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          });
+
+          setZone(zona);
+          status.textContent = AVES[zona].nombre;
+          status.style.color = col;
+        } else {
+          setZone(null);
+          status.textContent = "Muestra tu mano";
+          status.style.color = "#666";
+        }
+      }
+
+      startBtn.onclick = async () => {
+        startPopup.classList.add("hidden");
+
+        await Tone.start();
+        audioOk = true;
+        await loadAudio();
+
+        hands = new Hands({
+          locateFile: (f) =>
+            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`,
+        });
+        hands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+        hands.onResults(onResults);
+
+        camera = new Camera(video, {
+          onFrame: async () => {
+            if (!processing) {
+              processing = true;
+              try {
+                await hands.send({ image: video });
+              } catch (e) {}
+              processing = false;
+            }
+          },
+          width: 640,
+          height: 480,
+        });
+        await camera.start();
+
+        status.style.display = "block";
+      };
+    </script>
   </body>
 </html>

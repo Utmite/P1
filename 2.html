@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aves de Chile - Mapa Interactivo</title>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+    <link
+      href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="loading-popup" class="loading-popup">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h2>Cargando Assets</h2>
+        <p>Preparando el mapa y los sonidos de las aves...</p>
+      </div>
+    </div>
+
+    <div id="audio-popup" class="audio-popup hidden">
+      <div class="popup-content">
+        <h2>🐦 Aves de Chile</h2>
+        <p>
+          Explora el mapa interactivo y escucha los sonidos de las aves de cada
+          región
+        </p>
+        <button id="activate-audio" class="activate-button">
+          Activar Audio
+        </button>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="title">Aves de Chile</div>
+      <div class="subtitle">
+        Pasa el cursor sobre una región para escuchar su ave característica
+      </div>
+      <div id="map"></div>
+      <div id="region-info" class="region-info hidden">
+        <div class="bird-name"></div>
+        <div class="region-name"></div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-color red"></span>
+          <span class="legend-text">Mayor cantidad de especies</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color blue"></span>
+          <span class="legend-text">Menor cantidad de especies</span>
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
