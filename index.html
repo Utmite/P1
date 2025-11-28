@@ -77,19 +77,22 @@
         background: #ddd;
       }
 
-      /* Cámara oculta */
+      /* Cámara visible centrada */
       #camera-section {
-        position: fixed;
-        top: -9999px;
-        left: -9999px;
-        width: 1px;
-        height: 1px;
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 30px;
+        border-radius: 8px;
         overflow: hidden;
+        background: #000;
       }
-      #video,
+      #video {
+        display: none;
+      }
       #canvas {
-        width: 640px;
-        height: 480px;
+        width: 100%;
+        display: block;
+        transform: scaleX(-1);
       }
 
       /* Indicador de zona */
@@ -236,16 +239,16 @@
 
     <h1>Aves de Chile</h1>
 
+    <!-- Cámara centrada -->
+    <div id="camera-section">
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+
     <div class="zone-bar">
       <div class="zone-lbl norte" id="lbl-norte">Norte</div>
       <div class="zone-lbl centro" id="lbl-centro">Centro</div>
       <div class="zone-lbl sur" id="lbl-sur">Sur</div>
-    </div>
-
-    <!-- Cámara oculta para detección -->
-    <div id="camera-section">
-      <video id="video" autoplay playsinline></video>
-      <canvas id="canvas"></canvas>
     </div>
 
     <div id="gallery">
@@ -467,46 +470,21 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(results.image, 0, 0);
 
-        // Líneas divisoras
         const w = canvas.width / 3;
-        ctx.strokeStyle = "rgba(255,255,255,0.2)";
-        ctx.setLineDash([8, 8]);
-        ctx.beginPath();
-        ctx.moveTo(w, 0);
-        ctx.lineTo(w, canvas.height);
-        ctx.moveTo(w * 2, 0);
-        ctx.lineTo(w * 2, canvas.height);
-        ctx.stroke();
-        ctx.setLineDash([]);
 
         if (results.multiHandLandmarks?.length > 0) {
           const lm = results.multiHandLandmarks[0];
           const x = lm[8].x * canvas.width;
           const zona = x < w ? "norte" : x < w * 2 ? "centro" : "sur";
 
-          // Dibujar mano
-          const col =
+          setZone(zona);
+          status.textContent = AVES[zona].nombre;
+          status.style.color =
             zona === "norte"
               ? "#ff8a65"
               : zona === "centro"
               ? "#81c784"
               : "#64b5f6";
-          ctx.fillStyle = col;
-          lm.forEach((p, i) => {
-            ctx.beginPath();
-            ctx.arc(
-              p.x * canvas.width,
-              p.y * canvas.height,
-              i === 8 ? 10 : 5,
-              0,
-              Math.PI * 2
-            );
-            ctx.fill();
-          });
-
-          setZone(zona);
-          status.textContent = AVES[zona].nombre;
-          status.style.color = col;
         } else {
           setZone(null);
           status.textContent = "Muestra tu mano";
